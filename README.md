@@ -3,6 +3,9 @@ SQuaSH bokeh microservice
 
 ## The squash-bokeh microservice
 
+The SQuaSH bokeh apps live in the [bokeh docker container](Dockerfile) which uses nginx as reverse proxy. There are mount points to store the TLS certificates and nginx specific configuration. 
+
+![SQuaSH bokeh microservice](squash-bokeh.png)
 
 ### Kubernetes deployment
 

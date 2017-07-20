@@ -15,30 +15,37 @@ push: check-tag
 	docker push $(PREFIX):${TAG}
 
 keys:
+	@echo "Creating TLS key and certificate..."
 	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $(KEY) -out $(CERT) -subj "/CN=squash-bokeh/O=LSST"
 
 secret:
+	@echo "Creating secret..."
 	kubectl delete --ignore-not-found=true secrets tls-certs
 	kubectl create secret generic tls-certs --from-file=$(KEY) --from-file=$(CERT)
 
 configmap:
+	@echo "Creating config map for nginx configuration..."
 	kubectl delete --ignore-not-found=true configmap nginx-conf
 	kubectl create configmap nginx-conf --from-file=$(NGINX_CONFIG)
 
-deployment: check-tag keys secret configmap
+service: check-tag keys secret configmap
+	@echo "Creating service..."
 	kubectl delete --ignore-not-found=true services squash-bokeh
 	kubectl create -f $(SERVICE_CONFIG)
 
-    # The deployment is created after the service because the external IP
-    # and port must be sent to the bokeh container
+# The deployment is created after the service because the external IP
+# and port must be sent to the bokeh container
 
+deployment: service
+	@echo "Creating deployment..."
+	@$(REPLACE) $(DEPLOYMENT_TEMPLATE) $(DEPLOYMENT_CONFIG)
 	kubectl delete --ignore-not-found=true deployment squash-bokeh
-	$(REPLACE) $(DEPLOYMENT_TEMPLATE) > $(DEPLOYMENT_CONFIG)
 	kubectl create -f $(DEPLOYMENT_CONFIG)
 
 
 update: check-tag
-	$(REPLACE) $(DEPLOYMENT_TEMPLATE) > $(DEPLOYMENT_CONFIG)
+	@echo "Updating squash-bokeh deployment..."
+	@$(REPLACE) $(DEPLOYMENT_TEMPLATE) $(DEPLOYMENT_CONFIG)
 	kubectl apply -f $(DEPLOYMENT_CONFIG) --record
 	kubectl rollout history deployment squash-bokeh
 

@@ -28,7 +28,7 @@ else
     PORT=443
 fi
 
-if [ "$HOST" == "<no value>" ] || [ "$PORT" == "<no value>" ]; then
+if [ "$HOST" == "" ] || [ "$PORT" == "" ]; then
     echo "Service is not ready..."
     echo "If you are deploying to a minikube local cluster, make sure you set MINIKUBE=true."
     exit 1

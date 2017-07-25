@@ -22,7 +22,13 @@ and get the external IP address for the service with:
 kubectl get service squash-bokeh
 ```
 
-NOTE: if using `minikube` open the service with:
+NOTE: if using `minikube` make the deployment using:
+
+```
+MINIKUBE=true TAG=latest make deployment
+```
+
+and open the service with: 
 
 ```
 minikube service --https squash-bokeh
@@ -33,7 +39,7 @@ minikube service --https squash-bokeh
 #### Build a docker image and push it to docker hub
 
 ```
-make build push
+TAG=latest make build push
 ```
 
 #### Create secrets
@@ -67,7 +73,7 @@ make configmap
 
 Create kubernetes deployment and service:
 ```
-make deployment
+TAG=latest make deployment
 ```
 
 #### View logs
@@ -98,8 +104,8 @@ kubectl rollout history deployment squash-bokeh
 Modify the `squash-bokeh` image and then apply the new configuration for the kubernetes deployment:
   
 ```
-export TAG=<new tag>
-make build push update
+
+TAG=latest make build push update
 ```
 
 Check the deployment changes:

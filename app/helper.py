@@ -6,6 +6,7 @@ from bokeh.models import Span, Label
 
 SQUASH_API_URL = os.environ.get('SQUASH_API_URL', None)
 
+
 def get_api_endpoint_urls():
     """
     Return lookup for api endpoints and urls
@@ -75,5 +76,3 @@ def add_span_annotation(plot, value, text, color):
 
     plot.add_layout(span)
     plot.add_layout(label)
-
-

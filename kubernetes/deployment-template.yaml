@@ -38,7 +38,7 @@ spec:
             secretName: tls-certs
         - name: nginx-conf
           configMap:
-            name: nginx-conf
+            name: squash-bokeh-nginx-conf
             items:
               - key: 'nginx.conf'
                 path: 'nginx.conf'

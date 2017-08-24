@@ -14,7 +14,7 @@ push: check-tag
 
 configmap:
 	@echo "Creating config map for nginx configuration..."
-	kubectl delete --ignore-not-found=true configmap suqash-bokeh-nginx-conf
+	kubectl delete --ignore-not-found=true configmap squash-bokeh-nginx-conf
 	kubectl create configmap squash-bokeh-nginx-conf --from-file=$(NGINX_CONFIG)
 
 service:
@@ -25,7 +25,7 @@ service:
 # The deployment is created after the service because the external IP
 # and port must be sent to the bokeh container
 
-deployment: check-tag keys configmap service
+deployment: check-tag configmap service
 	@echo "Creating deployment..."
 	@$(REPLACE) $(DEPLOYMENT_TEMPLATE) $(DEPLOYMENT_CONFIG)
 	kubectl delete --ignore-not-found=true deployment squash-bokeh

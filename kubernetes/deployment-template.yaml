@@ -32,6 +32,8 @@ spec:
               value: {{ HOST }}
             - name: SQUASH_BOKEH_SERVICE_PORT
               value: {{ PORT }}
+            - name: SQUASH_API_URL
+              value: {{ SQUASH_API_URL }}
       volumes:
         - name: tls-certs
           secret:

@@ -12,13 +12,16 @@ fi
 # values returned if the service is not ready
 HOST=""
 PORT=""
+SQUASH_MINIKUBE_IP=""
+SQUASH_API_PORT=""
 
 # on minikube we don't have an external IP
-# configure the `minikube ip` to point to squash-local.lsst.codes in your /etc/hosts
+# `minikube ip` points to squash-local.lsst.codes in /etc/hosts
 
 if [ "$MINIKUBE" == "true" ]; then
     HOST=squash-local.lsst.codes
     PORT=$(kubectl get services squash-bokeh -o jsonpath --template='{.spec.ports[0].nodePort}')
+    SQUASH_MINIKUBE_IP=$(minikube ip)
     SQUASH_API_PORT=$(kubectl get services squash-api -o jsonpath --template='{.spec.ports[0].nodePort}')
 else
     # on GKE
@@ -38,12 +41,11 @@ if [ "$HOST" == "" ] || [ "$PORT" == "" ]; then
 fi
 
 echo "Service address: $HOST:$PORT"
-echo "SQuaSH API address: $HOST:$SQUASH_API_PORT"
 
 sed -e "
 s/{{ TAG }}/${TAG}/
 s/{{ HOST }}/${HOST}/
 s/{{ PORT }}/\"${PORT}\"/
+s/{{ SQUASH_MINIKUBE_IP }}/${SQUASH_MINIKUBE_IP}/
 s|{{ SQUASH_API_URL }}|\"https://${HOST}:${SQUASH_API_PORT}\"|
-
 " $1 > $2

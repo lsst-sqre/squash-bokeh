@@ -23,14 +23,17 @@ spec:
             - name: tls-certs
               mountPath: '/etc/tls'
         - name: bokeh
+          imagePullPolicy: "Always"
           image: lsstsqre/squash-bokeh:{{ TAG }}
           ports:
             - name: http
               containerPort: 5006
           env:
-            - name: SQUASH_BOKEH_SERVICE_HOST
+            - name: SQUASH_BOKEH_HOST
               value: {{ HOST }}
-            - name: SQUASH_BOKEH_SERVICE_PORT
+            - name: SQUASH_MINIKUBE_IP
+              value: {{ SQUASH_MINIKUBE_IP }}
+            - name: SQUASH_BOKEH_PORT
               value: {{ PORT }}
             - name: SQUASH_API_URL
               value: {{ SQUASH_API_URL }}

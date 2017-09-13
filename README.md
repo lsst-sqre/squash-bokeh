@@ -102,4 +102,31 @@ Check the deployment changes:
   kubectl get replicasets
 ```
 
+## Development workflow
+
+
+You can install the dependencies and run `squash-bokeh` locally for development
+
+1. Install the software dependencies
+```
+git clone  https://github.com/lsst-sqre/squash-bokeh.git
+
+cd squash-bokeh
+
+virtualenv env -p python3
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+2. Run the `squash-bokeh` 
+
+NOTE: see instructions on how to run the [squash-api](https://github.com/lsst-sqre/squash-api)
+ which is required by `squash-bokeh`
+
+```
+export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment
+bokeh serve --log-level debug app/<name of the bokeh app you want to run>
+```
+
+The `squash-bokeh` will run at `http://localhost:5006`. 
 

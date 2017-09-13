@@ -189,46 +189,49 @@ class Monitor(object):
         # in the measurements data frame (left) and preserving the original
         # order
 
-        self.data = self.measurements.merge(self.code_changes,
-                                            on='ci_id', how='left')
+        self.data = self.measurements
+
+        if self.code_changes.size > 0:
+            self.data = self.measurements.merge(self.code_changes,
+                                                on='ci_id', how='left')
 
         # we need at least two data points to draw a line
-        size = len(self.data['value'])
+        size = self.data.size
         if size > 2:
             self.empty = False
 
-        # one requirement of bokeh is that all the attributes of a column data
-        # source must have the same size
-        units = [self.specs['unit']] * size
+            # one requirement of bokeh is that all the attributes of a
+            # column data source must have the same size
+            units = [self.specs['unit']] * size
 
-        # TODO: perhaps this manipulation could be done in the view
+            # list of package names and git urls from the code changes
+            # API endpoint
+            package_names = []
+            git_urls = []
 
-        # list of package names and git urls from the code changes API endpoint
-        package_names = []
-        git_urls = []
+            # TODO: make this manipulation in the view
+            for i, sublist in enumerate(self.data['packages']):
+                package_names.append([])
+                git_urls.append([])
+                # can be a list or a nan (i.e, a pandas missing value)
+                if type(sublist) == list:
+                    for package in sublist:
+                        package_names[i].append(package[0])
+                        git_urls[i].append(
+                            "{}/commit/{}".format(package[2].strip('.git'),
+                                                  package[1]))
 
-        for i, sublist in enumerate(self.data['packages']):
-            package_names.append([])
-            git_urls.append([])
-            # can be a list or a nan (i.e, a pandas missing value)
-            if type(sublist) == list:
-                for package in sublist:
-                    package_names[i].append(package[0])
-                    git_urls[i].append(
-                        "{}/commit/{}".format(package[2].strip('.git'),
-                                              package[1]))
-
-        self.source.data = dict(x=[datetime.strptime(x.split('.')[0],
-                                                     "%Y-%m-%dT%H:%M:%S")
-                                   for x in self.data['date']],
-                                y=self.data['value'],
-                                time=[x.replace('T', ' ').split('.')[0]
-                                      for x in self.data['date']],
-                                ci_ids=self.data['ci_id'],
-                                ci_urls=self.data['ci_url'],
-                                units=units,
-                                names=package_names,
-                                git_urls=git_urls)
+            self.source.data = dict(x=[datetime.strptime(x.split('.')[0],
+                                                         "%Y-%m-%dT%H:%M:%S")
+                                       for x in self.data['date']],
+                                    y=self.data['value'],
+                                    time=[x.replace('T', ' ').split('.')[0]
+                                          for x in self.data['date']],
+                                    ci_ids=self.data['ci_id'],
+                                    ci_urls=self.data['ci_url'],
+                                    units=units,
+                                    names=package_names,
+                                    git_urls=git_urls)
 
     def make_header(self):
         """Make the app title"""
@@ -321,7 +324,11 @@ class Monitor(object):
         # use this name convention for the apps, e.g. the bokeh app for
         # displaying diagnostic plots for metrics AM1, AM2, AM3 is named AMx
 
-        bokeh_app = self.selected_metric.replace(self.selected_metric[-1], 'x')
+        bokeh_app = None
+        if self.selected_metric:
+            bokeh_app = self.selected_metric.replace(self.selected_metric[-1],
+                                                     'x')
+
         bokeh_app_url = "{}".format(bokeh_app)
 
         # job id is selected from the table
@@ -450,4 +457,4 @@ class Monitor(object):
 
 
 curdoc().add_root(Monitor().layout)
-curdoc().title = "SQUASH"
+curdoc().title = "Monitor App - LSST SQUASH"

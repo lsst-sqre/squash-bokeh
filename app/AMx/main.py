@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, Span, Label, Slider
 from bokeh.models.widgets import Div
@@ -15,15 +14,36 @@ BOKEH_BASE_DIR = os.path.dirname(
 
 sys.path.append(BOKEH_BASE_DIR)
 
-from helper import get_url_args, get_data_as_pandas_df, add_span_annotation # noqa
+from helper import get_url_args, get_data_as_pandas_df# noqa
+
+
+def add_span_annotation(plot, value, text, color):
+    """ Add span annotation, used for metric specification
+    thresholds.
+    """
+
+    span = Span(location=value, dimension='width',
+                line_color=color, line_dash='dotted',
+                line_width=2)
+
+    label = Label(x=plot.plot_width-300, y=value+0.5, x_units='screen',
+                  y_units='data', text=text, text_color=color,
+                  text_font_size='11pt', text_font_style='normal',
+                  render_mode='canvas')
+
+    plot.add_layout(span)
+    plot.add_layout(label)
+
 
 # Get url query args
-args = get_url_args(curdoc, defaults={'metric': 'AM1'})
+args = get_url_args(curdoc)
 
+title = Div(text="""<h2>No data to display.</h2>""")
 
-# App title
-title = Div(text="""<h2>{metric} plot for {ci_dataset} dataset from
-                    CI job {ci_id}</h2>""".format_map(args))
+if args:
+    # App title
+    title.text = """<h2>{metric} plot for {ci_dataset} dataset from
+                    CI job {ci_id}</h2>""".format_map(args)
 
 # Get data
 data = get_data_as_pandas_df(endpoint='apps',
@@ -31,7 +51,10 @@ data = get_data_as_pandas_df(endpoint='apps',
 
 # Configure bokeh data sources with the full and
 # selected data sets
+snr_cut = 100
 
+if args:
+    snr_cut = args['snr_cut']
 
 snr = {'value': [], 'label': '', 'unit': ''}
 selected_snr = []
@@ -60,7 +83,9 @@ MIN_DIST = 0
 MAX_DIST = 100
 
 # SNR slider
-snr_slider = Slider(start=MIN_SNR, end=MAX_SNR, value=float(args['snr_cut']),
+
+
+snr_slider = Slider(start=MIN_SNR, end=MAX_SNR, value=float(snr_cut),
                     step=SNR_STEP, title="SNR")
 
 # Scatter plot
@@ -94,7 +119,7 @@ partial_scatter.nonselection_glyph = Circle(fill_color="#1f77b4",
 # Add annotations to the scatter plot
 # TODO: improve variable naming
 
-span1 = Span(location=float(args['snr_cut']), dimension='height',
+span1 = Span(location=float(snr_cut), dimension='height',
              line_color='black', line_dash='dashed', line_width=3)
 
 plot.add_layout(span1)

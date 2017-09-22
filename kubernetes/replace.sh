@@ -11,41 +11,39 @@ fi
 
 # values returned if the service is not ready
 HOST=""
-PORT=""
-SQUASH_MINIKUBE_IP=""
-SQUASH_API_PORT=""
 
-# on minikube we don't have an external IP
-# `minikube ip` points to squash-local.lsst.codes in /etc/hosts
+# on GKE
+WAIT_TIME=5
+while [ "$HOST" == "" ] && [ "$WAIT_TIME" -le 20 ]; do
+    echo "Waiting for the service to become available..."
+    sleep $(( WAIT_TIME++ ))
+    HOST=$(kubectl get service squash-bokeh -o jsonpath --template='{.status.loadBalancer.ingress[0].ip}')
+done
 
-if [ "$MINIKUBE" == "true" ]; then
-    HOST=squash-local.lsst.codes
-    PORT=$(kubectl get services squash-bokeh -o jsonpath --template='{.spec.ports[0].nodePort}')
-    SQUASH_MINIKUBE_IP=$(minikube ip)
-    SQUASH_API_PORT=$(kubectl get services squash-api -o jsonpath --template='{.spec.ports[0].nodePort}')
-else
-    # on GKE
-    WAIT_TIME=5
-    while [ "$HOST" == "" ] && [ "$WAIT_TIME" -le 10 ]; do
-        echo "Waiting for the service to become available..."
-        sleep $(( WAIT_TIME++ ))
-        HOST=$(kubectl get service squash-bokeh -o jsonpath --template='{.status.loadBalancer.ingress[0].ip}')
-    done
-    PORT=443
-fi
-
-if [ "$HOST" == "" ] || [ "$PORT" == "" ]; then
+if [ "$HOST" == "" ]; then
     echo "Service is not ready..."
-    echo "If you are deploying to a minikube local cluster, make sure you set MINIKUBE=true."
     exit 1
 fi
 
+PORT=443
 echo "Service address: $HOST:$PORT"
+
+NAMESPACE=$(kubectl config current-context)
+
+SQUASH_BOKEH_HOST="squash-bokeh.${NAMESPACE}.lsst.codes"
+
+if [ "$NAMESPACE" == "squash-prod" ]; then
+    SQUASH_BOKEH_HOST="squash-bokeh.lsst.codes"
+fi
+
+SQUASH_API_URL="https://squash-api.${NAMESPACE}.lsst.codes"
+
+if [ "$NAMESPACE" == "squash-prod" ]; then
+    SQUASH_API_URL="https://squash-api.lsst.codes"
+fi
 
 sed -e "
 s/{{ TAG }}/${TAG}/
-s/{{ HOST }}/${HOST}/
-s/{{ PORT }}/\"${PORT}\"/
-s/{{ SQUASH_MINIKUBE_IP }}/${SQUASH_MINIKUBE_IP}/
-s|{{ SQUASH_API_URL }}|\"https://${HOST}:${SQUASH_API_PORT}\"|
+s/{{ SQUASH_BOKEH_HOST }}/${SQUASH_BOKEH_HOST}/
+s|{{ SQUASH_API_URL }}|\"${SQUASH_API_URL}\"|
 " $1 > $2

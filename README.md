@@ -22,18 +22,6 @@ get the external IP address for the service with:
   kubectl get service squash-bokeh
 ```
 
-NOTE: if using `minikube` make the deployment using:
-
-```
-  MINIKUBE=true TAG=latest make deployment
-```
-
-and open the service with: 
-
-```
-  minikube service --https squash-bokeh
-```
-
 ### Debugging
 
 You can inspect the deployment using:

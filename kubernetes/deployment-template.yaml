@@ -30,11 +30,7 @@ spec:
               containerPort: 5006
           env:
             - name: SQUASH_BOKEH_HOST
-              value: {{ HOST }}
-            - name: SQUASH_MINIKUBE_IP
-              value: {{ SQUASH_MINIKUBE_IP }}
-            - name: SQUASH_BOKEH_PORT
-              value: {{ PORT }}
+              value: {{ SQUASH_BOKEH_HOST }}
             - name: SQUASH_API_URL
               value: {{ SQUASH_API_URL }}
       volumes:

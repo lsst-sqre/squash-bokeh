@@ -30,6 +30,12 @@ echo "Service address: $HOST:$PORT"
 
 NAMESPACE=$(kubectl config current-context)
 
+SQUASH_DASH_HOST="squash-dash-${NAMESPACE}.lsst.codes"
+
+if [ "$NAMESPACE" == "squash-prod" ]; then
+    SQUASH_DASH_HOST="squash-dash.lsst.codes"
+fi
+
 SQUASH_BOKEH_HOST="squash-bokeh-${NAMESPACE}.lsst.codes"
 
 if [ "$NAMESPACE" == "squash-prod" ]; then
@@ -44,6 +50,7 @@ fi
 
 sed -e "
 s/{{ TAG }}/${TAG}/
+s/{{ SQUASH_DASH_HOST }}/${SQUASH_DASH_HOST}/
 s/{{ SQUASH_BOKEH_HOST }}/${SQUASH_BOKEH_HOST}/
 s|{{ SQUASH_API_URL }}|\"${SQUASH_API_URL}\"|
 " $1 > $2

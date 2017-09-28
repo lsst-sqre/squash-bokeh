@@ -1,12 +1,15 @@
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
-  name: "squash-bokeh"
+  name: squash-bokeh
+  labels:
+    app: squash
 spec:
   selector:
-    app: "squash-bokeh"
+    app: squash
+    tier: bokeh
   ports:
-    - protocol: "TCP"
+    - protocol: TCP
       port: 443
       targetPort: 443
   type: LoadBalancer

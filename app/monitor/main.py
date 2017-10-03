@@ -17,17 +17,21 @@ sys.path.append(os.path.join(BASE_DIR))
 from helper import get_datasets, get_metrics, get_specs, get_data_as_pandas_df # noqa
 
 
-class Monitor(object):
+class Monitor:
     """The monitor app consists of a time series plot showing measurements
     for a given selected ci_dataset and metric. It also displays code changes
     comparing the list of packages and their git shas between two consecutive
     ci_jobs
     """
 
-    def __init__(self):
+    def __init__(self, args):
 
         # Measurements for the selected dataset and metric
         self.data = {}
+
+        self.message = ""
+
+        self.args = args
 
         # Used to control the display if there's no data
         self.empty = True
@@ -42,20 +46,48 @@ class Monitor(object):
                                              'names': [],
                                              'git_urls': [],
                                              })
-        self.compose_layout()
 
-    def compose_layout(self):
+    def get_layout(self):
         """Compose the app layout, the main elements are the widgets to
         select the ci_dataset, the metric, a div for the app header, a
         plot and a table
         """
 
-        # Load  metrics and datasets and use the default ones
+        # List of known metrics
         self.metrics = get_metrics()
+
+        # The default metric from the api
+        self.selected_metric = self.metrics['default']
+
+        # If a valid metric name is passed through the url args
+        # use it instead
+        if 'metric' in self.args:
+            metric = args['metric'][0].decode("utf-8")
+            if metric in self.metrics['metrics']:
+                self.selected_metric = metric
+            else:
+                self.message = "Invalid metric name '{}' in the " \
+                               "URL argument, using the default" \
+                               " value '{}'.".format(metric,
+                                                     self.selected_metric)
+
+        # List of known datasets
         self.datasets = get_datasets()
 
-        self.selected_metric = self.metrics['default']
+        # The default dataset name from the api
         self.selected_dataset = self.datasets['default']
+
+        # If a valid dataset name is passed through the url args
+        # use it instead
+        if 'ci_dataset' in self.args:
+            ci_dataset = args['ci_dataset'][0].decode("utf-8")
+            if ci_dataset in self.datasets['datasets']:
+                self.selected_dataset = ci_dataset
+            else:
+                self.message = "Invalid dataset name '{}' in the " \
+                               "URL argument, using the default" \
+                               " value '{}'.".format(ci_dataset,
+                                                     self.selected_dataset)
 
         # Configure the dataset selection widget
         dataset_selection = Select(title="Data Set:",
@@ -81,12 +113,12 @@ class Monitor(object):
 
         self.make_table()
 
-        self.layout = column(row(widgetbox(metric_selection, width=150),
-                                 widgetbox(dataset_selection, width=150)),
-                             widgetbox(self.title, width=1000),
-                             self.plot,
-                             widgetbox(self.table_title, width=1000),
-                             self.table)
+        return column(row(widgetbox(metric_selection, width=150),
+                          widgetbox(dataset_selection, width=150)),
+                      widgetbox(self.header, width=1000),
+                      self.plot,
+                      widgetbox(self.table_title, width=1000),
+                      self.table)
 
     def on_dataset_change(self, attr, old, new):
         """Handle dataset selection event, it reloads the measurements
@@ -196,13 +228,14 @@ class Monitor(object):
                                                 on='ci_id', how='left')
 
         # we need at least two data points to draw a line
-        size = self.data.size
+        size = len(self.data['date'])
+
         if size > 2:
             self.empty = False
 
             # one requirement of bokeh is that all the attributes of a
             # column data source must have the same size
-            units = [self.specs['unit']] * size
+            units = [self.specs['unit']]*size
 
             # list of package names and git urls from the code changes
             # API endpoint
@@ -217,9 +250,9 @@ class Monitor(object):
                 if type(sublist) == list:
                     for package in sublist:
                         package_names[i].append(package[0])
-                        git_urls[i].append(
-                            "{}/commit/{}".format(package[2].strip('.git'),
-                                                  package[1]))
+                        git_urls[i].append("{}/commit/{}".format(
+                            package[2].replace('.git', ''),
+                            package[1]))
 
             self.source.data = dict(x=[datetime.strptime(x.split('.')[0],
                                                          "%Y-%m-%dT%H:%M:%S")
@@ -234,9 +267,11 @@ class Monitor(object):
                                     git_urls=git_urls)
 
     def make_header(self):
-        """Make the app title"""
+        """Make the app header cointaining message, title and
+        description areas."""
 
-        self.title = Div(text="")
+        self.header = Div(text="")
+
         self.update_header()
 
     def update_header(self):
@@ -244,12 +279,17 @@ class Monitor(object):
         the metric or dataset changes
         """
 
-        title = "{} measurements for {} dataset".format(self.selected_metric,
-                                                        self.selected_dataset)
+        message = "<p style='color:red;'>{}</p>".format(self.message)
+
+        title = "<h3>{} measurements for {} " \
+                "dataset</h3>".format(self.selected_metric,
+                                      self.selected_dataset)
+
         description = self.specs['description']
 
-        self.title.text = """<left><h3>{}</h3>{}</left>""".format(title,
-                                                                  description)
+        self.header.text = """<left>{}{}{}</left>""".format(message,
+                                                            title,
+                                                            description)
 
     def make_plot(self):
         """Make a line-circle-line plot with a hover, other bokeh tools
@@ -261,7 +301,8 @@ class Monitor(object):
                                     ("Job ID", "@ci_ids")])
 
         self.plot = Figure(x_axis_type='datetime',
-                           tools='pan, wheel_zoom, xbox_zoom, reset, tap',
+                           tools='pan, wheel_zoom, xbox_zoom, save, reset, \
+                           tap',
                            active_scroll='wheel_zoom')
 
         self.plot.add_tools(hover)
@@ -272,12 +313,12 @@ class Monitor(object):
         self.plot.x_range.range_padding = 0
         self.plot.xaxis.axis_label = 'Time'
 
-        self.plot.line(
-            x='x', y='y', source=self.source,
-            line_width=2, color='black')
+        self.plot.line(x='x', y='y', source=self.source,
+                       line_width=1, color='lightgray')
 
         self.plot.circle(x='x', y='y', source=self.source,
-                         color="black", fill_color="white", size=16)
+                         color="gray", fill_color="white",
+                         size=16)
 
         self.make_annotations()
 
@@ -312,9 +353,9 @@ class Monitor(object):
         columns = self.update_table()
 
         self.table = DataTable(
-            source=self.source, columns=columns, width=1000, height=200,
+            source=self.source, columns=columns, width=1000, height=150,
             row_headers=True, fit_columns=False, scroll_to_selection=True,
-            editable=False
+            editable=False, selectable=True
         )
 
     def update_table(self):
@@ -331,23 +372,24 @@ class Monitor(object):
 
         bokeh_app_url = "{}".format(bokeh_app)
 
-        # job id is selected from the table
+        # Job ID
+        template = '<a href="<%= ci_urls %>" target=_blank ><%= value %></a>'
+        ci_url_formatter = HTMLTemplateFormatter(template=template)
+
+        # Value
         params = "?metric={}&" \
                  "ci_dataset={}&" \
                  "ci_id=<%= ci_ids %>".format(self.selected_metric,
                                               self.selected_dataset)
-
         bokeh_app_url = "{}/{}".format(bokeh_app_url, params)
-
-        template = '<a href="{}"><%= value %></a>'.format(bokeh_app_url)
+        template = '<a href="{}" ><%= parseFloat(value).toFixed(3) %>' \
+                   '</a>'.format(bokeh_app_url)
         value_url_formatter = HTMLTemplateFormatter(template=template)
 
-        template = '<a href="<%= ci_urls %>"><%= value %></a>'
-        ci_url_formatter = HTMLTemplateFormatter(template=template)
-
+        # Packages
         template = '<% for (x in git_urls) { ' \
                    '       if (x>0) print(", "); ' \
-                   '       print("<a href=" + git_urls[x] + ">" ' \
+                   '       print("<a href=" + git_urls[x] + " target=_blank>"'\
                    '              + value[x] + "</a>")' \
                    '   }; ' \
                    '%>'
@@ -355,14 +397,17 @@ class Monitor(object):
 
         columns = [
             TableColumn(field="time", title="Time",
-                        width=200),
+                        width=200, sortable=True,
+                        default_sort='descending'),
             TableColumn(field="ci_ids", title="Job ID",
-                        formatter=ci_url_formatter, width=100),
+                        formatter=ci_url_formatter, width=100,
+                        sortable=False),
             TableColumn(field="y", title="Value",
-                        formatter=value_url_formatter,
-                        width=100, sortable=False),
+                        formatter=value_url_formatter, width=100,
+                        sortable=False),
+            # Give room for a large list of package names
             TableColumn(field="names", title="Packages",
-                        formatter=git_url_formatter, width=600,
+                        formatter=git_url_formatter, width=3000,
                         sortable=False),
         ]
 
@@ -456,5 +501,8 @@ class Monitor(object):
             self.status.text = "No data to display"
 
 
-curdoc().add_root(Monitor().layout)
 curdoc().title = "Monitor App - LSST SQUASH"
+
+args = curdoc().session_context.request.arguments
+
+curdoc().add_root(Monitor(args).get_layout())

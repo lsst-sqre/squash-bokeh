@@ -2,13 +2,15 @@ kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
   name: squash-bokeh
+  labels:
+    app: squash
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: squash-bokeh
-        track: stable
+        app: squash
+        tier: bokeh
     spec:
       containers:
         - name: nginx
@@ -29,12 +31,10 @@ spec:
             - name: http
               containerPort: 5006
           env:
+            - name: SQUASH_DASH_HOST
+              value: {{ SQUASH_DASH_HOST }}
             - name: SQUASH_BOKEH_HOST
-              value: {{ HOST }}
-            - name: SQUASH_MINIKUBE_IP
-              value: {{ SQUASH_MINIKUBE_IP }}
-            - name: SQUASH_BOKEH_PORT
-              value: {{ PORT }}
+              value: {{ SQUASH_BOKEH_HOST }}
             - name: SQUASH_API_URL
               value: {{ SQUASH_API_URL }}
       volumes:

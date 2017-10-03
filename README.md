@@ -3,35 +3,17 @@ SQuaSH bokeh microservice
 
 ![SQuaSH bokeh microservice](squash-bokeh.png)
 
-The SQuaSH bokeh apps run in the [bokeh docker container](Dockerfile) which uses nginx as reverse proxy. There are mount points to store the TLS certificates and nginx specific configuration. 
 
 ## Requirements 
 
-`squash-bokeh` requires the [squash-api](https://github.com/lsst-sqre/squash-api) microservice deployed.
+`squash-bokeh` requires the [squash-api](https://github.com/lsst-sqre/squash-api).
 
 ### Kubernetes deployment
 
-Clone this repo and deploy the `squash-bokeh` microservice using:
+Assuming you have kubectl configured to access your GCE cluster, you can deploy `squash-bokeh` using:
 
 ```
-  TAG=latest make deployment
-```
-
-get the external IP address for the service with:
-```
-  kubectl get service squash-bokeh
-```
-
-NOTE: if using `minikube` make the deployment using:
-
-```
-  MINIKUBE=true TAG=latest make deployment
-```
-
-and open the service with: 
-
-```
-  minikube service --https squash-bokeh
+TAG=latest make deployment
 ```
 
 ### Debugging
@@ -39,20 +21,20 @@ and open the service with:
 You can inspect the deployment using:
 
 ```
-  kubectl describe deployment squash-bokeh
+kubectl describe deployment squash-bokeh
 ```
 
-and view the `nginx` and `bokeh` container logs using:
+and view the container logs using:
 
 ```
-  kubectl logs deployment/squash-bokeh nginx
-  kubectl logs deployment/squash-bokeh bokeh
+kubectl logs deployment/squash-bokeh nginx
+kubectl logs deployment/squash-bokeh bokeh
 ```
 
-Run an interactive shell inside the `bokeh` container using:
+Run an interactive shell inside the `bokeh` container with:
 
 ```
-  kubectl exec <TAB>  --stdin --tty -c bokeh /bin/sh
+kubectl exec -it <TAB> -c bokeh /bin/bash
 ```
 
 ### Rolling out updates
@@ -60,46 +42,47 @@ Run an interactive shell inside the `bokeh` container using:
 Check the update history with:
 
 ```
-  kubectl rollout history deployment squash-bokeh
+kubectl rollout history deployment squash-bokeh
 ```
 
 Modify the `squash-bokeh` image and then apply the new configuration for the kubernetes deployment:
   
 ```
-  TAG=latest make build push update
+TAG=latest make build push update
 ```
 
 Check the deployment changes:
 
 ```
-  kubectl describe deployments squash-bokeh
+kubectl describe deployments squash-bokeh
 ```
 
 ### Scaling up the squash-bokeh microservice
 
 Use the `kubectl get replicasets` command to view the current set of replicas.
+
 ```
-  kubectl get replicasets
+kubectl get replicasets
 ```
 
 Use the `kubectl scale` command to scale the `squash-bokeh` deployment:
 
 ```
-  kubectl scale deployments squash-bokeh --replicas=3
+kubectl scale deployments squash-bokeh --replicas=3
 ```
 
 or change the `squash-bokeh-deployment.yaml` configuration file and apply the new configuration:
 
 ```
-  kubectl apply -f squash-bokeh-deployment.yaml
+kubectl apply -f squash-bokeh-deployment.yaml
 ```
 
 Check the deployment changes:
 
 ```
-  kubectl describe deployments squash-bokeh
-  kubectl get pods
-  kubectl get replicasets
+kubectl describe deployments squash-bokeh
+kubectl get pods
+kubectl get replicasets
 ```
 
 ## Development workflow
@@ -125,7 +108,7 @@ NOTE: see instructions on how to run the [squash-api](https://github.com/lsst-sq
 
 ```
 export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment
-bokeh serve --log-level debug app/<name of the bokeh app you want to run>
+bokeh serve --log-level debug --allow-websocket-origin=<hostname for squash-dash if running locally> app/<name of the bokeh app you want to run>
 ```
 
 The `squash-bokeh` will run at `http://localhost:5006`. 

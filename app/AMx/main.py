@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+import pandas as pd
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, Span, Label, Slider
 from bokeh.models.widgets import Div
@@ -14,7 +15,7 @@ BOKEH_BASE_DIR = os.path.dirname(
 
 sys.path.append(BOKEH_BASE_DIR)
 
-from helper import get_url_args, get_data_as_pandas_df# noqa
+from helper import get_metrics, get_datasets, get_data, get_data_as_pandas_df # noqa
 
 
 def add_span_annotation(plot, value, text, color):
@@ -35,26 +36,43 @@ def add_span_annotation(plot, value, text, color):
     plot.add_layout(label)
 
 
-# Get url query args
-args = get_url_args(curdoc)
+# Get url args
+args = curdoc().session_context.request.arguments
 
+defaults = get_data('defaults')
+
+metric = defaults['metric']
+if 'metric' in args:
+    metric = args['metric'][0].decode("utf-8")
+
+ci_dataset = defaults['ci_dataset']
+if 'ci_dataset' in args:
+    ci_dataset = args['ci_dataset'][0].decode("utf-8")
+
+
+ci_id = defaults['ci_id']
+if 'ci_id' in args:
+    ci_id = args['ci_id'][0].decode("utf-8")
+
+snr_cut = defaults['snr_cut']
+if 'snr_cut' in args:
+    snr_cut = args['snr_cut'][0].decode("utf-8")
+
+# App title
 title = Div(text="""<h2>No data to display.</h2>""")
 
-if args:
-    # App title
-    title.text = """<h2>{metric} plot for {ci_dataset} dataset from
-                    CI job {ci_id}</h2>""".format_map(args)
+data = pd.DataFrame()
 
-# Get data
-data = get_data_as_pandas_df(endpoint='apps',
-                             params=args)
+if metric and ci_dataset and ci_id:
+    title.text = """<h2>{} plot for {} dataset from
+                CI job {}</h2>""".format(metric, ci_dataset, ci_id)
 
-# Configure bokeh data sources with the full and
-# selected data sets
-snr_cut = 100
+    # Get data
+    data = get_data_as_pandas_df(endpoint='apps',
+                                 params={'metric': metric,
+                                         'ci_dataset': ci_dataset,
+                                         'ci_id': ci_id})
 
-if args:
-    snr_cut = args['snr_cut']
 
 snr = {'value': [], 'label': '', 'unit': ''}
 selected_snr = []
@@ -64,11 +82,11 @@ selected_dist = []
 
 if not data.empty:
     snr = data['matchedDataset']['snr']
-    index = np.array(snr['value']) > float(args['snr_cut'])
+    index = np.array(snr['value']) > float(snr_cut)
     selected_snr = np.array(snr['value'])[index]
 
     dist = data['matchedDataset']['dist']
-    index = np.array(snr['value']) > float(args['snr_cut'])
+    index = np.array(snr['value']) > float(snr_cut)
     selected_dist = np.array(dist['value'])[index]
 
 
@@ -78,7 +96,7 @@ selected = ColumnDataSource(data={'snr': selected_snr, 'dist': selected_dist})
 # Ranges used in the bokeh widgets
 MIN_SNR = 0
 MAX_SNR = 500
-SNR_STEP = 1
+SNR_STEP = 10
 MIN_DIST = 0
 MAX_DIST = 100
 
@@ -124,7 +142,7 @@ span1 = Span(location=float(snr_cut), dimension='height',
 
 plot.add_layout(span1)
 
-label1 = Label(x=285, y=425, x_units='screen', y_units='screen',
+label1 = Label(x=275, y=375, x_units='screen', y_units='screen',
                text='SNR > {:3.2f}'.format(span1.location),
                render_mode='css')
 
@@ -160,18 +178,18 @@ n = len(selected.data['dist'])
 median = np.median(selected.data['dist'])
 rms = np.sqrt(np.mean(np.square(selected.data['dist'])))
 
-label2 = Label(x=200, y=400, x_units='screen', y_units='screen',
+label2 = Label(x=225, y=350, x_units='screen', y_units='screen',
                text='Median = {:3.2f} marcsec'.format(median),
                render_mode='css')
 
 hist.add_layout(label2)
 
-label3 = Label(x=200, y=375, x_units='screen', y_units='screen',
+label3 = Label(x=225, y=325, x_units='screen', y_units='screen',
                text='RMS = {:3.2f} marcsec'.format(rms), render_mode='css')
 
 hist.add_layout(label3)
 
-label4 = Label(x=200, y=425, x_units='screen', y_units='screen',
+label4 = Label(x=225, y=375, x_units='screen', y_units='screen',
                text='N = {}'.format(n), render_mode='css')
 
 hist.add_layout(label4)
@@ -234,12 +252,12 @@ snr_slider.on_change('value', update)
 # App layout
 
 if data.empty:
-    layout = column(widgetbox(title, width=900),
+    layout = column(widgetbox(title, width=1000),
                     widgetbox(Div(text="""<h4>No data to display.</h4>"""),
-                              width=900))
+                              width=1000))
 else:
-    layout = row(column(widgetbox(title, width=900),
-                        widgetbox(snr_slider, width=900),
+    layout = row(column(widgetbox(title, width=1000),
+                        widgetbox(snr_slider, width=1000),
                         row(plot, hist)))
 
 curdoc().add_root(layout)

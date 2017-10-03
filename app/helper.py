@@ -1,16 +1,13 @@
 import os
 import pandas as pd
 import requests
-from furl import furl
-
-from requests.adapters import HTTPAdapter
 
 # the default url works for local tests of the api
 SQUASH_API_URL = os.environ.get('SQUASH_API_URL',
                                 'http://localhost:8000')
 
 s = requests.Session()
-s.mount('https://', HTTPAdapter(max_retries=5))
+s.mount('https://', requests.adapters.HTTPAdapter(max_retries=5))
 
 
 def get_api_endpoint_urls():
@@ -187,41 +184,3 @@ def get_specs(metric):
 
     return {'unit': unit, 'description': description,
             'minimum': minimum, 'design': design, 'stretch': stretch}
-
-
-def get_url_args(doc, defaults=None):
-    """Return url args recovered from django_full_path cookie in
-    the bokeh request header.
-
-    If defaults values are provided, overwrite the default values
-    obtained from the API
-    """
-
-    args = None
-    data = get_data('defaults')
-
-    if data:
-        args = data
-        # overwrite api default values
-        if defaults:
-            for key in defaults:
-                args[key] = defaults[key]
-
-        r = doc().session_context.request
-
-        try:
-            if 'squash_dash_full_path' in r.cookies:
-                django_full_path = r.cookies['django_full_path'].value
-                tmp = furl(django_full_path).args
-                for key in tmp:
-                    # overwrite default values with those passed
-                    # as url args, make sure the url arg (key) is valid
-                    if key in args:
-                        args[key] = tmp[key]
-
-                # the bokeh app name is the second segment of the url path
-                args['bokeh_app'] = furl(django_full_path).path.segments[1]
-        except AttributeError as e:
-                print(e)
-
-    return args

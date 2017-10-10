@@ -254,11 +254,11 @@ class Monitor:
                             package[2].replace('.git', ''),
                             package[1]))
 
-            self.source.data = dict(x=[datetime.strptime(x.split('.')[0],
-                                                         "%Y-%m-%dT%H:%M:%S")
+            self.source.data = dict(x=[datetime.strptime(x,
+                                                         "%Y-%m-%dT%H:%M:%SZ")
                                        for x in self.data['date']],
                                     y=self.data['value'],
-                                    time=[x.replace('T', ' ').split('.')[0]
+                                    time=[x.replace('T', ' ').replace('Z', '')
                                           for x in self.data['date']],
                                     ci_ids=self.data['ci_id'],
                                     ci_urls=self.data['ci_url'],

@@ -97,7 +97,7 @@ def get_metrics(default=None):
         the default value returned from the API
     """
 
-    data = get_data('metrics')
+    data = get_data('metrics')['results']
 
     metrics = []
     default_metric = None
@@ -159,7 +159,7 @@ def get_specs(metric):
         metric stretch goal
     """
 
-    data = get_data('metrics')
+    data = get_data('metrics')['results']
 
     unit = str()
     description = str()

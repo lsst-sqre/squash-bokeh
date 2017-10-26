@@ -2,7 +2,8 @@ import os
 import sys
 from datetime import datetime
 from bokeh.io import curdoc
-from bokeh.models import ColumnDataSource, HoverTool, Span, Label
+from bokeh.models import ColumnDataSource, HoverTool, Span, Label, \
+    LinearAxis, Range1d
 from bokeh.models.widgets import Select, Div, DataTable, TableColumn,\
     HTMLTemplateFormatter
 from bokeh.layouts import row, widgetbox, column
@@ -14,7 +15,8 @@ BASE_DIR = os.path.dirname(
 
 sys.path.append(os.path.join(BASE_DIR))
 
-from helper import get_datasets, get_metrics, get_specs, get_data_as_pandas_df # noqa
+from helper import get_data, get_datasets, get_metrics, get_specs,\
+    get_data_as_pandas_df # noqa
 
 
 class Monitor:
@@ -45,6 +47,7 @@ class Monitor:
                                              'units': [],
                                              'names': [],
                                              'git_urls': [],
+                                             'count': [],
                                              })
 
     def get_layout(self):
@@ -77,6 +80,11 @@ class Monitor:
         # The default dataset name from the api
         self.selected_dataset = self.datasets['default']
 
+        # The default period of time to load and display
+
+        default_period = get_data('defaults')['period']
+        self.selected_period = default_period
+
         # If a valid dataset name is passed through the url args
         # use it instead
         if 'ci_dataset' in self.args:
@@ -90,7 +98,7 @@ class Monitor:
                                                      self.selected_dataset)
 
         # Configure the dataset selection widget
-        dataset_selection = Select(title="Data Set:",
+        dataset_selection = Select(title="Data set:",
                                    value=self.selected_dataset,
                                    options=self.datasets['datasets'],
                                    width=100)
@@ -105,7 +113,21 @@ class Monitor:
 
         metric_selection.on_change("value", self.on_metric_change)
 
-        self.load_data()
+        # Configure the time window selection widget
+
+        period_selection = Select(title="Period:",
+                                  value=default_period,
+                                  options=["Last 3 months", "Last 6 months",
+                                           "Last year", "All"],
+                                  width=100)
+
+        period_selection.on_change("value", self.on_period_change)
+
+        self.load_code_changes()
+
+        self.load_measurements()
+
+        self.update_datasource()
 
         self.make_header()
 
@@ -116,6 +138,7 @@ class Monitor:
         return column(row(widgetbox(metric_selection, width=150),
                           widgetbox(dataset_selection, width=150)),
                       widgetbox(self.header, width=1000),
+                      widgetbox(period_selection, width=150),
                       self.plot,
                       widgetbox(self.table_title, width=1000),
                       self.table)
@@ -144,7 +167,12 @@ class Monitor:
 
         # load data for the selected dataset
         self.selected_dataset = new
-        self.load_data()
+
+        self.load_code_changes()
+
+        self.load_measurements()
+
+        self.update_datasource()
 
         self.update_header()
 
@@ -155,10 +183,10 @@ class Monitor:
         self.table.columns = self.update_table()
 
     def on_metric_change(self, attr, old, new):
-        """Handle metric selection event,  it reloads the measurements
+        """handle metric selection event,  it reloads the measurements
         when another metric is selected and updates the app
 
-        Parameters
+        parameters
         ----------
         attr : str
             refers to the changed attribute’s name, not used
@@ -167,37 +195,87 @@ class Monitor:
         new : str
             new value
 
-        See also
+        see also
         --------
         http://bokeh.pydata.org/en/latest/docs/user_guide/interaction
         /widgets.html#userguide-interaction-widgets
         """
 
         # set new status for the app
-        self.status.text = "Loading..."
+        self.status.text = "loading..."
 
         # load data for the selected metric
         self.selected_metric = new
-        self.load_data()
+
+        self.load_measurements()
+
+        self.update_datasource()
 
         self.update_header()
 
         self.update_plot()
 
-        # Update data table content, the url to the bokeh apps
+        # update data table content, the url to the bokeh apps
         # depends on the selected metric
         self.table.columns = self.update_table()
 
-    def load_data(self):
-        """ Load data and update the bokeh column data source with
-        measurements for the selected dataset and metric
+    def on_period_change(self, attr, old, new):
+        """handle period selection event,  it reloads the measurements
+        and updates the app
+
+        parameters
+        ----------
+        attr : str
+            refers to the changed attribute’s name, not used
+        old : str
+            previous value, not used
+        new : str
+            new value
+
+        see also
+        --------
+        http://bokeh.pydata.org/en/latest/docs/user_guide/interaction
+        /widgets.html#userguide-interaction-widgets
         """
 
-        # load specifications for the selected metric
-        self.specs = get_specs(self.selected_metric)
+        # set new status for the app
+        self.status.text = "loading..."
 
-        # load measurements and code changes for the selected
-        # metric and dataset
+        # load data for the selected period
+        self.selected_period = new
+
+        self.load_measurements()
+
+        self.update_datasource()
+
+        self.update_header()
+
+        self.update_plot()
+
+        # update data table content, the url to the bokeh apps
+        # depends on the selected metric
+        self.table.columns = self.update_table()
+
+    def on_code_changes_click(self, new):
+        """Handle the code changes check box event"""
+
+        self.display_code_changes = bool(new)
+
+        self.update_plot()
+
+    def load_code_changes(self):
+        # in the current implementation we have a job matrix in ci so
+        # the same ci_id run have different ci_datasets thus we
+        # need to filter by ci_dataset here
+
+        self.code_changes = get_data_as_pandas_df(
+            endpoint='code_changes',
+            params={'ci_dataset': self.selected_dataset})
+
+    def load_measurements(self):
+        """ Load measurements update the bokeh column data source for the
+        selected dataset and metric
+        """
 
         # the separation in two distinct API endpoints helps to improve
         # the performance here cache is enabled in the API and we don't
@@ -207,25 +285,25 @@ class Monitor:
         self.measurements = get_data_as_pandas_df(
             endpoint='measurements',
             params={'ci_dataset': self.selected_dataset,
-                    'metric': self.selected_metric})
+                    'metric': self.selected_metric,
+                    'period': self.selected_period})
 
-        # in the current implementation we have a job matrix in ci so
-        # the same ci_id have runs for different ci_datasets thus we
-        # need to filter here
-
-        self.code_changes = get_data_as_pandas_df(
-            endpoint='code_changes',
-            params={'ci_dataset': self.selected_dataset})
-
+    def update_datasource(self):
         # now we merge the two data frames on 'ci_id' keeping all ci_id's
         # in the measurements data frame (left) and preserving the original
         # order
+
+        # load specifications for the selected metric
+        self.specs = get_specs(self.selected_metric)
 
         self.data = self.measurements
 
         if self.code_changes.size > 0:
             self.data = self.measurements.merge(self.code_changes,
                                                 on='ci_id', how='left')
+
+        # replaces NaN with zeros in count
+        self.data['count'] = self.data['count'].fillna(0)
 
         # we need at least two data points to draw a line
         size = len(self.data['date'])
@@ -264,7 +342,8 @@ class Monitor:
                                     ci_urls=self.data['ci_url'],
                                     units=units,
                                     names=package_names,
-                                    git_urls=git_urls)
+                                    git_urls=git_urls,
+                                    count=self.data['count'])
 
     def make_header(self):
         """Make the app header cointaining message, title and
@@ -296,9 +375,10 @@ class Monitor:
         annotate metric thresholds and the app status
         """
 
-        hover = HoverTool(tooltips=[("Time", "@time"),
-                                    ("Value", "@y (@units)"),
-                                    ("Job ID", "@ci_ids")])
+        hover = HoverTool(tooltips=[("Time (UTC)", "@time"),
+                                    ("Metric measurement", "@y (@units)"),
+                                    ("Job ID", "@ci_ids"),
+                                    ("# of packages changed", "@count")])
 
         self.plot = Figure(x_axis_type='datetime',
                            tools='pan, wheel_zoom, xbox_zoom, save, reset, \
@@ -311,14 +391,30 @@ class Monitor:
 
         self.plot.x_range.follow = 'end'
         self.plot.x_range.range_padding = 0
-        self.plot.xaxis.axis_label = 'Time'
+        self.plot.xaxis.axis_label = 'Time (UTC)'
 
         self.plot.line(x='x', y='y', source=self.source,
                        line_width=1, color='lightgray')
 
+        max_count = max(self.source.data['count'])
+
+        self.plot.extra_y_ranges = {"count": Range1d(start=0, end=max_count)}
+
+        self.plot.line(x='x', y='count', y_range_name='count',
+                       source=self.source,
+                       line_width=1, color='lightblue',
+                       legend="Code changes")
+
+        self.plot.add_layout(LinearAxis(y_range_name="count",
+                                        axis_label="# of packages changed"),
+                             'right')
+
         self.plot.circle(x='x', y='y', source=self.source,
                          color="gray", fill_color="white",
-                         size=16)
+                         size=12, legend="Metric measurements")
+
+        self.plot.legend.location = "top_right"
+        self.plot.legend.click_policy = "hide"
 
         self.make_annotations()
 
@@ -327,8 +423,10 @@ class Monitor:
     def update_plot(self):
 
         # set y-axis label
-        self.plot.yaxis.axis_label = "{} [{}]".format(self.selected_metric,
-                                                      self.specs['unit'])
+        self.plot.yaxis[0].axis_label = "{} [{}]".format(self.selected_metric,
+                                                         self.specs['unit'])
+
+        self.plot.yaxis[1].axis_label = "# of packages changed"
 
         # update threshold and status annotations
 
@@ -339,13 +437,13 @@ class Monitor:
         the previous ci build, add links to diagnostic plots associated with
         the measurements, to the corresponding ci build and git urls
         """
-        title = "Code Changes"
+        title = "Code changes"
 
-        description = "The table lists measurements values for each job " \
+        description = "The table lists metric measurements for each CI job " \
                       "and packages that have changed with respect "\
                       "to the pevious job." \
-                      " Tap on the job ID, on the values or on the package" \
-                      " names for more information."
+                      " Click on the Job ID, on the metric measurements or" \
+                      " on the LSST stack packages for more information."
 
         self.table_title = Div(text="""<left><h3>{}
         </h3>{}</left>""".format(title, description))
@@ -396,17 +494,17 @@ class Monitor:
         git_url_formatter = HTMLTemplateFormatter(template=template)
 
         columns = [
-            TableColumn(field="time", title="Time",
+            TableColumn(field="time", title="Time (UTC)",
                         width=200, sortable=True,
                         default_sort='descending'),
             TableColumn(field="ci_ids", title="Job ID",
-                        formatter=ci_url_formatter, width=100,
+                        formatter=ci_url_formatter, width=120,
                         sortable=False),
-            TableColumn(field="y", title="Value",
-                        formatter=value_url_formatter, width=100,
+            TableColumn(field="y", title="Metric measurement",
+                        formatter=value_url_formatter, width=120,
                         sortable=False),
             # Give room for a large list of package names
-            TableColumn(field="names", title="Packages",
+            TableColumn(field="names", title="LSST stack packages",
                         formatter=git_url_formatter, width=3000,
                         sortable=False),
         ]

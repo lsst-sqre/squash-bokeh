@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, HoverTool, Span, Label, \
-    LinearAxis, Range1d
+    LinearAxis, Range1d, CustomJS
 from bokeh.models.widgets import Select, Div, DataTable, TableColumn,\
     HTMLTemplateFormatter
 from bokeh.layouts import row, widgetbox, column
@@ -399,6 +399,19 @@ class Monitor:
         max_count = max(self.source.data['count'])
 
         self.plot.extra_y_ranges = {"count": Range1d(start=0, end=max_count)}
+
+        # use a callback to reset the range of the extra y-axis to its original
+        # value when zoom or pan is executed
+
+        jscode = """range.set('start', parseInt({}));
+                    range.set('end', parseInt({}));
+                 """
+
+        self.plot.extra_y_ranges["count"].callback = CustomJS(
+            args=dict(range=self.plot.extra_y_ranges['count']),
+            code=jscode.format(self.plot.extra_y_ranges['count'].start,
+                               self.plot.extra_y_ranges['count'].end)
+        )
 
         self.plot.line(x='x', y='count', y_range_name='count',
                        source=self.source,

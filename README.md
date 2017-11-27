@@ -13,7 +13,8 @@ SQuaSH bokeh microservice
 Assuming you have kubectl configured to access your GCE cluster, you can deploy `squash-bokeh` using:
 
 ```
-TAG=latest make deployment
+cd squash-bokeh
+TAG=latest make service deployment
 ```
 
 ### Debugging

@@ -25,7 +25,7 @@ service:
 # The deployment is created after the service because the external IP
 # and port must be sent to the bokeh container
 
-deployment: check-tag configmap service
+deployment: check-tag configmap
 	@echo "Creating deployment..."
 	@$(REPLACE) $(DEPLOYMENT_TEMPLATE) $(DEPLOYMENT_CONFIG)
 	kubectl delete --ignore-not-found=true deployment squash-bokeh

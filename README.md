@@ -13,8 +13,7 @@ SQuaSH bokeh microservice
 Assuming you have kubectl configured to access your GCE cluster, you can deploy `squash-bokeh` using:
 
 ```
-cd squash-bokeh
-TAG=latest make service deployment
+TAG=latest make deployment
 ```
 
 ### Debugging
@@ -109,7 +108,7 @@ NOTE: see instructions on how to run the [squash-api](https://github.com/lsst-sq
 
 ```
 export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment
-bokeh serve --log-level debug --allow-websocket-origin=<hostname for squash-dash if running locally> app/<name of the bokeh app you want to run>
+bokeh serve --log-level debug --allow-websocket-origin=localhost:5006 app/<name of the bokeh app you want to run>
 ```
 
 The `squash-bokeh` will run at `http://localhost:5006`. 

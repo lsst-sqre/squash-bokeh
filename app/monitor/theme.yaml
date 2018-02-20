@@ -1,6 +1,6 @@
 attrs:
   Plot:
-    plot_height: 400
+    plot_height: 250
     plot_width: 1000
     sizing_mode: 'scale_width'
     toolbar_location: above
@@ -10,8 +10,8 @@ attrs:
   Axis:
     major_label_text_font_size: '10pt'
     major_label_text_font_style: 'normal'
-    axis_label_text_font_size: '14pt'
+    axis_label_text_font_size: '11pt'
     axis_label_text_font_style: 'normal'
 
   Grid:
-    grid_line_alpha: 0.5
+    grid_line_alpha: 0.1

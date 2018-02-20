@@ -30,7 +30,7 @@ echo "Service address: $HOST:$PORT"
 
 NAMESPACE=$(kubectl config current-context)
 
-SQUASH_DASH_HOST="squash-dash-${NAMESPACE}.lsst.codes"
+SQUASH_DASH_HOST="squash-${NAMESPACE}.lsst.codes"
 
 if [ "$NAMESPACE" == "squash-prod" ]; then
     SQUASH_DASH_HOST="squash.lsst.codes"
@@ -42,7 +42,7 @@ if [ "$NAMESPACE" == "squash-prod" ]; then
     SQUASH_BOKEH_HOST="squash-bokeh.lsst.codes"
 fi
 
-SQUASH_API_URL="https://squash-api-${NAMESPACE}.lsst.codes"
+SQUASH_API_URL="https://squash-restful-api-${NAMESPACE}.lsst.codes"
 
 if [ "$NAMESPACE" == "squash-prod" ]; then
     SQUASH_API_URL="https://squash-api.lsst.codes"

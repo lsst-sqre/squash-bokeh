@@ -15,47 +15,57 @@ class Interactions(Layout):
         self.selected_package = new
 
         self.metrics = self.get_metrics(package=self.selected_package)
+        metric_names = self.get_sorted(data=self.metrics, key='name')
+        self.selected_metric = metric_names[0]
 
-        metric_names = self.get_sorted(data=self.metrics,
-                                       key='name')
+        # This will trigger a metric change, and will update the datasource
+        # with measurements for the new selected metric.
+
+        # We can preserve the code changes and the period selection
 
         self.metrics_widget.options = metric_names
 
-        self.selected_metrics = [metric_names[0]]
+        self.load_measurements(self.selected_dataset, self.selected_metric,
+                               self.selected_period)
+
+        self.update_datasource()
 
         self.update_header()
-
-        self.update_tabs()
+        self.update_plot()
+        self.update_footnote()
+        self.update_table()
 
     def on_change_dataset(self, attr, old, new):
 
         self.selected_dataset = new
 
-        self.load_monitor_data(self.selected_dataset, self.selected_period)
+        self.load_data(self.selected_dataset, self.selected_metric,
+                       self.selected_period)
 
-        self.update_header()
-
-        self.update_tabs()
+        self.update_plot()
+        self.update_table()
 
     def on_change_period(self, attr, old, new):
 
         self.selected_period = self.periods['periods'][new]
 
-        self.load_monitor_data(self.selected_dataset, self.selected_period)
+        self.load_data(self.selected_dataset, self.selected_metric,
+                       self.selected_period)
 
-        self.update_tabs()
+        self.update_plot()
+        self.update_table()
 
     def on_change_metric(self, attr, old, new):
 
-        metric = new[0]
+        self.selected_metric = new
 
-        if metric in self.selected_metrics:
-            self.selected_metrics.remove(metric)
-        else:
-            self.selected_metrics.append(metric)
+        # No need to reload code changes here
+        self.load_measurements(self.selected_dataset, self.selected_metric,
+                               self.selected_period)
 
-        # Make sure at least one metric is selected
-        if not self.selected_metrics:
-            self.selected_metrics = [metric]
+        self.update_datasource()
 
-        self.update_tabs()
+        self.update_plot_title()
+        self.update_plot()
+        self.update_footnote()
+        self.update_table()

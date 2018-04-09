@@ -1,4 +1,4 @@
-bokeh==0.12.14
+bokeh==0.12.15
 requests==2.18.4
 pandas==0.20.3
 furl==0.5.7

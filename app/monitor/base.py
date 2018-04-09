@@ -21,14 +21,15 @@ class BaseApp(APIHelper):
         self.measurements = pd.DataFrame()
         self.code_changes = pd.DataFrame()
 
-        self.cds = ColumnDataSource(data= {'time': [],
-                                           'date_created': [],
-                                           'value': [],
-                                           'ci_id': [],
-                                           'ci_url': [],
-                                           'count': [],
-                                           'package_names': [],
-                                           'git_urls': []})
+        self.cds = ColumnDataSource(data={'time': [],
+                                          'date_created': [],
+                                          'value': [],
+                                          'ci_id': [],
+                                          'ci_url': [],
+                                          'count': [],
+                                          'package_names': [],
+                                          'git_urls': []})
+
     def parse_args(self):
 
         args = self.doc.session_context.request.arguments
@@ -98,7 +99,6 @@ class BaseApp(APIHelper):
 
         # Use this empty dataframe to reset the column datasource,
         # column names must match
-
         df = pd.DataFrame({'time': [], 'date_created': [],
                            'value': [], 'ci_id': [], 'ci_url': [],
                            'packages': [], 'count': [], 'package_names': [],

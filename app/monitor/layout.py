@@ -1,8 +1,9 @@
-from bokeh.models.widgets import Select, Div, MultiSelect, RadioButtonGroup, \
-    Panel, Tabs
+from bokeh.models.widgets import Select, Div, RadioButtonGroup
 from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import Figure
-from bokeh.models import HoverTool, GroupFilter, CDSView
+from bokeh.models import HoverTool, Range1d, CustomJS, \
+    LinearAxis, Label
+
 from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter
 
 from base import BaseApp
@@ -11,9 +12,11 @@ from base import BaseApp
 class Layout(BaseApp):
     """Define the Monitor App widgets and the Bokeh document layout.
     """
+    # default sizes for widgets
     SMALL = 175
     MEDIUM = 350
     LARGE = 1000
+    XLARGE = 3000
 
     def __init__(self):
         super().__init__()
@@ -21,14 +24,24 @@ class Layout(BaseApp):
         # generic message shown in the header area
         self.message = str()
 
-        self.inputs()
-        self.header()
-        self.period()
-        self.tabs()
-        self.layout()
+        self.make_input_widgets()
+        self.make_header()
 
-    def get_sorted(self, data, key):
-        """Return a list of values sorted alphabetically.
+        self.load_data(self.selected_dataset,
+                       self.selected_metric,
+                       self.selected_period)
+
+        self.make_plot_title()
+        self.make_plot()
+        self.make_footnote()
+        self.make_table()
+
+        self.make_layout()
+
+    @staticmethod
+    def get_sorted(data, key):
+        """Extract a list of values from a dict
+        and sort them alphabetically.
 
         Parameters
         ----------
@@ -47,23 +60,22 @@ class Layout(BaseApp):
 
         return sorted(values)
 
-    def inputs(self):
-        """Define the widgets to select dataset, package,
-        metric and tags.
+    def make_input_widgets(self):
+        """Define the widgets to select dataset, verification package,
+        metrics and period
         """
+        # Datasets
+        self.datasets = self.get_datasets(default="hsc")
 
-        # Dataset widget
-        self.datasets = self.get_datasets(default='cfht')
-
-        if 'dataset' in self.args:
-            self.selected_dataset = self.args['dataset']
+        if 'ci_dataset' in self.args:
+            self.selected_dataset = self.args['ci_dataset']
         else:
             self.selected_dataset = self.datasets['default']
 
         self.datasets_widget = Select(title="Dataset:",
                                       value=self.selected_dataset,
                                       options=self.datasets['datasets'])
-        # Package widget
+        # Verification Packages
         self.packages = self.get_packages(default='validate_drp')
 
         if 'package' in self.args:
@@ -74,47 +86,21 @@ class Layout(BaseApp):
         self.packages_widget = Select(title="Verification package:",
                                       value=self.selected_package,
                                       options=self.packages['packages'])
-        # Metric widget
+        # Metrics
         self.metrics = self.get_metrics(package=self.selected_package)
 
         metric_names = self.get_sorted(data=self.metrics,
                                        key='name')
 
-        self.selected_metrics = [metric_names[0]]
-
-        self.metrics_widget = MultiSelect(title="Metrics:",
-                                          value=self.selected_metrics,
-                                          options=metric_names)
-        # Tags widget
-        if 'tags' in self.args:
-            self.selected_tags = self.args['tags']
+        if 'metric' in self.args:
+            self.selected_metric = self.args['metric']
         else:
-            self.selected_tags = self.get_sorted(self.metrics,
-                                                 key='tags')
+            self.selected_metric = metric_names[0]
 
-        self.tags_widget = MultiSelect(title="Filter by tag:",
-                                       value=[],
-                                       options=[])
-
-    def header(self):
-
-        self.header_widget = Div()
-        self.update_header()
-
-    def update_header(self):
-
-        message_text = "<center><p style='color:red;'>{}</p>" \
-                       "</center>".format(self.message)
-
-        title_text = "<h2>Measurements from <em>{}</em> package on " \
-                     "<em>{}</em> dataset</h2>".format(self.selected_package,
-                                                       self.selected_dataset)
-
-        self.header_widget.text = "{}{}".format(message_text, title_text)
-
-    def period(self):
-        """Configure the period selection widget.
-        """
+        self.metrics_widget = Select(title="Metric:",
+                                     value=self.selected_metric,
+                                     options=metric_names)
+        # Period
         self.periods = {'periods': ['All', 'Last Year', 'Last 6 Months',
                                     'Last Month'],
                         'default': 'Last 6 Months'}
@@ -129,233 +115,218 @@ class Layout(BaseApp):
         self.period_widget = RadioButtonGroup(labels=self.periods['periods'],
                                               active=active)
 
-    def make_plot_title(self, display_name, description):
-        """Plot title with metric display name and a description
+    def make_header(self):
+        """Header area including a title and message text"""
+
+        self.header_widget = Div()
+        self.update_header()
+
+    def update_header(self):
+
+        title_text = "<h2>The impact of code changes on" \
+                     " Key Performance Metrics</h2>"
+
+        message_text = "<center><p style='color:red;'>{}</p>" \
+                       "</center>".format(self.message)
+
+        self.header_widget.text = "{}{}".format(title_text, message_text)
+
+    def make_plot_title(self):
+        """Plot title including metric display name and a description
         """
+        self.plot_title = Div()
+        self.update_plot_title()
 
-        title = Div(text="<p align='center'><strong>{}:</strong> "
-                    "{}</p>".format(display_name, description))
+    def update_plot_title(self):
 
-        return title
+        metric_name = self.selected_metric
 
-    def make_plot(self, metric_name, display_name, unit, ref_plot=None):
+        display_name = self.metrics[metric_name]['display_name']
+        description = self.metrics[metric_name]['description']
+
+        self.plot_title.text = "<p align='center'><strong>" \
+                               "{}:</strong> {}</p>".format(display_name,
+                                                            description)
+
+    def make_plot(self):
         """Time series plot with a hover and other bokeh tools.
-
-        Parameters
-        ----------
-        metric_name: str
-            the metric measurements to display
-        display_name: str
-            the metric display name
-        unit: str
-            the metric unit
-        ref_plot:
-            a reference plot used to link the x axis
-
-        Return
-        ------
-        plot: a bokeh Figure object
         """
-        filter = GroupFilter(column_name='metric_name', group=metric_name)
+        self.plot = Figure(x_axis_type="datetime",
+                           tools="pan, wheel_zoom, xbox_zoom, \
+                                  save, reset, tap",
+                           active_scroll="wheel_zoom")
 
-        view = CDSView(source=self.cds, filters=[filter])
+        self.plot.x_range.follow = 'end'
+        self.plot.x_range.range_padding = 0
+        self.plot.xaxis.axis_label = 'Time (UTC)'
 
-        # TODO: Add unit and package counts
-        # hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
-        #                             ("Metric measurement", "@value (@unit)"),
-        #                            ("# of packages changed", "@count")])
+        self.plot.legend.click_policy = 'hide'
+        self.plot.legend.location = 'top_right'
 
         hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
                                     ("Job ID", "@ci_id"),
-                                    ("Metric measurement", "@value")])
+                                    ("Metric measurement", "@value"),
+                                    ("# of packages changed", "@count")])
 
-        plot = Figure(x_axis_type='datetime',
-                      tools='pan, wheel_zoom, xbox_zoom, save, reset, tap',
-                      active_scroll='wheel_zoom')
+        self.plot.add_tools(hover)
 
-        if ref_plot:
-            plot.x_range = ref_plot.x_range
+        # Measurements
+        self.plot.line(x='time', y='value', source=self.cds,
+                       legend="Measurements", color="gray")
 
-        plot.x_range.follow = 'end'
-        plot.x_range.range_padding = 0
-        plot.xaxis.axis_label = 'Time (UTC)'
+        self.plot.circle(x='time', y='value', source=self.cds,
+                         color="gray", fill_color="white", size=12,
+                         legend="Measurements")
 
-        plot.add_tools(hover)
+        # Code changes
+        self.plot.add_layout(LinearAxis(y_range_name="pkgs_changed",
+                                        axis_label="# of packages changed"),
+                             'right')
 
-        plot.line(x='time', y='value', source=self.cds, view=view,
-                  legend='Metric measurements', color="gray")
+        max_count = 0
+        if 'count' in self.cds.data:
+            max_count = max(self.cds.data['count'])
 
-        plot.circle(x='time', y='value', source=self.cds, view=view,
-                    color="gray", fill_color="white", size=12,
-                    legend="Metric measurements")
+        self.plot.extra_y_ranges = {'pkgs_changed':
+                                    Range1d(start=0, end=max_count)}
 
-        if unit:
-            plot.yaxis[0].axis_label = "{} [{}]".format(display_name, unit)
-        else:
-            plot.yaxis[0].axis_label = "{}".format(display_name)
+        self.plot.line(x='time', y='count', y_range_name='pkgs_changed',
+                       source=self.cds, line_width=1, color='lightblue',
+                       legend="Code changes")
 
-        plot.legend.click_policy = 'hide'
-        plot.legend.location = 'top_right'
+        # This callback is used to reset the range of the extra y-axis
+        # to its original value when zoom or pan
 
-        # TODO: enable code changes
+        args = {'range': self.plot.extra_y_ranges['pkgs_changed']}
+        code = """
+            range.start = 0;
+            range.end = parseInt({});
+            """.format(max_count)
 
-        # max_count = max(self.source.data['count'])
+        callback = CustomJS(args=args, code=code)
 
-        # self.plot.extra_y_ranges = {"count": Range1d(start=0, end=max_count)}
+        self.plot.extra_y_ranges['pkgs_changed'].js_on_change('start',
+                                                              callback)
 
-        # use a callback to reset the range of the extra y-axis to its original
-        # value when zoom or pan is executed
+        self.status = Label(x=350, y=75, x_units='screen', y_units='screen',
+                            text="", text_color="lightgray",
+                            text_font_size='24pt',
+                            text_font_style='normal')
 
-        # jscode = """range.set('start', parseInt({}));
-        #            range.set('end', parseInt({}));
-        #         """
+        self.plot.add_layout(self.status)
 
-        # self.plot.extra_y_ranges["count"].callback = CustomJS(
-        #    args=dict(range=self.plot.extra_y_ranges['count']),
-        #    code=jscode.format(self.plot.extra_y_ranges['count'].start,
-        #                       self.plot.extra_y_ranges['count'].end)
-        # )
+        self.update_plot()
 
-        # self.plot.line(x='x', y='count', y_range_name='count',
-        #                source=self.source,
-        #               line_width=1, color='lightblue',
-        #               legend="Code changes")
+    def update_plot(self):
 
-        # self.plot.add_layout(LinearAxis(y_range_name="count",
-        #                                axis_label="# of packages changed"),
-        #                     'right')
-
-        # self.plot.yaxis[1].axis_label = "# of packages changed"
-
-        # update threshold and status annotations
-
-        # self.make_annotations()
-        # self.update_annotations()
-
-        return plot
-
-    def make_footnote(self, reference):
-
-        footnote = Div(text="")
-
-        url = reference['url']
-        doc = reference['doc']
-        page = reference['page']
-
-        if url and doc and page:
-            footnote.text = "<p align='right'>Ref.: <a href='{}'>{}</a>, " \
-                            "page {}.</p>".format(url, doc, page)
-
-        return footnote
-
-    def graph_view(self):
-        """Make the graph view panel with a list of bokeh widgets and plots
-        """
-        graph_view = []
-
-        ref_plot = None
-
-        # used the reversed order to show the latest metric selected first
-        for metric_name in reversed(self.selected_metrics):
-
-            display_name = self.metrics[metric_name]['display_name']
-            unit = self.metrics[metric_name]['unit']
-            description = self.metrics[metric_name]['description']
-            reference = self.metrics[metric_name]['reference']
-
-            title = self.make_plot_title(display_name, description)
-            plot = self.make_plot(metric_name, display_name,
-                                  unit, ref_plot)
-
-            # the first plot is used to link the x_range of the
-            # time series plots displayed in the graph view panel
-            if ref_plot is None:
-                ref_plot = plot
-
-            footnote = self.make_footnote(reference)
-
-            graph_view.append(widgetbox(title, width=Layout.LARGE))
-            graph_view.append(plot)
-            graph_view.append(widgetbox(footnote, width=Layout.LARGE))
-
-        n = len(self.selected_metrics)
-        self.graph_view_panel = Panel(child=column(graph_view),
-                                      title="Graph View ({})".format(n))
-
-    def table_view(self):
-        """Make the table view panel with a table showing the selected metrics
-        """
-
-        # Job ID
-        template = '<a href="<%= ci_url %>" target=_blank ><%= value %></a>'
-        ci_url_formatter = HTMLTemplateFormatter(template=template)
-
-        columns = [
-            TableColumn(field="date_created", title="Time (UTC)",
-                        sortable=True, default_sort='descending'),
-            TableColumn(field="ci_id", formatter=ci_url_formatter,
-                        title="Job ID", sortable=False)
-        ]
-
-        # Display only the latest metric selected
-        metric_name = self.selected_metrics[-1]
+        metric_name = self.selected_metric
 
         display_name = self.metrics[metric_name]['display_name']
         unit = self.metrics[metric_name]['unit']
 
         if unit:
+            self.plot.yaxis[0].axis_label = "{} [{}]".format(display_name,
+                                                             unit)
+        else:
+            self.plot.yaxis[0].axis_label = "{}".format(display_name)
+
+        self.status.text = ""
+
+        if self.cds.to_df().size < 2:
+            self.status.text = "No data to display"
+
+    def make_footnote(self):
+        """Footnote area to include reference info
+        """
+        self.footnote = Div()
+        self.update_footnote()
+
+    def update_footnote(self):
+
+        metric_name = self.selected_metric
+
+        reference = self.metrics[metric_name]['reference']
+
+        url = reference['url']
+        doc = reference['doc']
+        page = reference['page']
+
+        self.footnote.text = ""
+
+        if url and doc and page:
+            self.footnote.text = "<p align='right'>Ref.: " \
+                                 "<a href='{}'>{}</a>, " \
+                                 "page {}.</p>".format(url, doc, page)
+
+    def make_table(self):
+        """Make a table synched with the plot
+        """
+        self.table = DataTable(source=self.cds, columns=[],
+                               width=Layout.LARGE, height=Layout.SMALL,
+                               editable=False, selectable=True,
+                               fit_columns=False, scroll_to_selection=True)
+
+        self.update_table()
+
+    def update_table(self):
+
+        metric_name = self.selected_metric
+
+        display_name = self.metrics[metric_name]['display_name']
+        unit = self.metrics[metric_name]['unit']
+        if unit:
             title = "{} [{}]".format(display_name, unit)
         else:
             title = "{}".format(display_name)
 
-        columns.append(TableColumn(field='value', title=title, sortable=False))
+        # Job ID
+        template = '<a href="<%= ci_url %>" target=_blank ><%= value %></a>'
+        ci_url_formatter = HTMLTemplateFormatter(template=template)
 
-        filter = GroupFilter(column_name='metric_name', group=metric_name)
+        # Packages
+        template = """<% for (x in git_urls) {
+                      if (x>0) print(", ");
+                      print("<a href=" + git_urls[x] + " target=_blank>"
+                      + value[x] + "</a>")
+                      }; %>
+                   """
 
-        view = CDSView(source=self.cds, filters=[filter])
+        git_url_formatter = HTMLTemplateFormatter(template=template)
 
-        table_view = DataTable(source=self.cds, view=view, columns=columns,
-                               width=Layout.LARGE, height=Layout.MEDIUM,
-                               editable=False, selectable=True,
-                               scroll_to_selection=True)
+        columns = [
+            TableColumn(field="date_created", title="Time (UTC)",
+                        sortable=True, default_sort='descending',
+                        width=Layout.SMALL),
+            TableColumn(field="ci_id", formatter=ci_url_formatter,
+                        title="Job ID", sortable=False,
+                        width=Layout.SMALL),
+            TableColumn(field='value', title=title, sortable=False,
+                        width=Layout.SMALL),
+            # Give room for a large list of package names
+            TableColumn(field="package_names", title="Code changes",
+                        formatter=git_url_formatter, width=Layout.XLARGE,
+                        sortable=False)
+        ]
 
-        self.table_view_panel = Panel(child=table_view, title="Table View")
+        self.table.columns = columns
 
-    def tabs(self):
-
-        self.load_monitor_data(self.selected_dataset, self.selected_period)
-        self.tabs = Tabs()
-        self.update_tabs()
-
-    def update_tabs(self):
-
-        self.status = Div(text="<center><h2>Loading...</h2></center>")
-
-        self.graph_view_panel = Panel(child=self.status, title="Graph View")
-        self.table_view_panel = Panel(child=self.status, title="Table View")
-
-        # Update panels with the Loading... message content
-        self.tabs.tabs = [self.graph_view_panel, self.table_view_panel]
-
-        self.table_view()
-        self.graph_view()
-
-        # Update panels with the plots and table
-        self.tabs.tabs = [self.graph_view_panel, self.table_view_panel]
-
-    def layout(self):
-
-        # Define the app layout
+    def make_layout(self):
+        """App layout
+        """
         datasets = widgetbox(self.datasets_widget, width=Layout.SMALL)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
         metrics = widgetbox(self.metrics_widget, width=Layout.MEDIUM)
-        tags = widgetbox(self.tags_widget, width=Layout.MEDIUM)
 
         header = widgetbox(self.header_widget, width=Layout.LARGE)
         period = widgetbox(self.period_widget, width=Layout.LARGE)
-        tabs = widgetbox(self.tabs, width=Layout.LARGE)
 
-        l = column(row(datasets, packages, metrics, tags),
-                   header, period, tabs)
+        plot_title = widgetbox(self.plot_title, width=Layout.LARGE)
+
+        footnote = widgetbox(self.footnote, width=Layout.LARGE)
+
+        l = column(header,
+                   row(datasets, packages, metrics),
+                   period, plot_title, self.plot,
+                   footnote, self.table)
 
         self.add_layout(l)

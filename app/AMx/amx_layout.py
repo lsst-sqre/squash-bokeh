@@ -1,13 +1,15 @@
 import numpy as np
 
+from bokeh.models import Span, Label, Slider
 from bokeh.models.widgets import Select, Div
 from bokeh.models.ranges import Range1d
+from bokeh.models.glyphs import Circle
+
 from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import figure
-from bokeh.models.glyphs import Circle
-from bokeh.models import Span, Label, Slider
 
 from amx_base import BaseApp
+
 
 class Layout(BaseApp):
     """Define the widgets and the app layout.
@@ -68,7 +70,6 @@ class Layout(BaseApp):
 
         self.header_widget.text = "{}{}".format(message, title)
 
-
     def make_scatter_plot(self):
         """Scatter plot `SNR vs. distance`, with a span
         annotation showing the current SNR cut.
@@ -76,7 +77,7 @@ class Layout(BaseApp):
 
         self.plot = figure(tools="pan, box_zoom, wheel_zoom, reset",
                            active_scroll="wheel_zoom", x_axis_type="log",
-                           y_axis_location="left", x_axis_label = "SNR",
+                           y_axis_location="left", x_axis_label="SNR",
                            y_axis_label="d [marcsec]")
 
         self.plot.y_range = Range1d(0, 100)
@@ -88,7 +89,8 @@ class Layout(BaseApp):
         scatter.nonselection_glyph = Circle(fill_color='lightgray',
                                             line_color=None)
 
-        selected_scatter = self.plot.circle('snr', 'dist', size=5, fill_alpha=0.2,
+        selected_scatter = self.plot.circle('snr', 'dist', size=5,
+                                            fill_alpha=0.2,
                                             line_color=None,
                                             source=self.selected_cds)
 
@@ -104,9 +106,12 @@ class Layout(BaseApp):
 
         self.plot.add_layout(self.snr_span)
 
-        self.snr_label = Label(x=275, y=375, x_units='screen', y_units='screen',
-                          text='SNR > {:3.2f}'.format(self.snr_span.location),
-                          render_mode='css')
+        text = 'SNR > {:3.2f}'.format(self.snr_span.location)
+
+        self.snr_label = Label(x=275, y=375, x_units='screen',
+                               y_units='screen',
+                               text=text,
+                               render_mode='css')
 
         self.plot.add_layout(self.snr_label)
 
@@ -146,9 +151,11 @@ class Layout(BaseApp):
         # Median
         median = np.median(self.selected_cds.data['dist'])
 
-        self.median_label = Label(x=150, y=350, x_units='screen', y_units='screen',
-                       text='Median = {:3.2f} marcsec'.format(median),
-                       render_mode='css')
+        text = 'Median = {:3.2f} marcsec'.format(median)
+        self.median_label = Label(x=150, y=350, x_units='screen',
+                                  y_units='screen',
+                                  text=text,
+                                  render_mode='css')
 
         self.hist.add_layout(self.median_label)
 
@@ -158,7 +165,7 @@ class Layout(BaseApp):
         text = "RMS = {:3.2f} marcsec".format(rms)
 
         self.rms_label = Label(x=150, y=325, x_units='screen',
-                               y_units='screen', text = text,
+                               y_units='screen', text=text,
                                render_mode='css')
 
         self.hist.add_layout(self.rms_label)

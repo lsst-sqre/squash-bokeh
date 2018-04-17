@@ -2,6 +2,7 @@ import numpy as np
 
 from amx_layout import Layout
 
+
 class Interactions(Layout):
     """Add app interactions
     See https://bokeh.pydata.org/en/latest/docs/user_guide/
@@ -51,14 +52,9 @@ class Interactions(Layout):
 
         self.rms_label.text = "RMS = {:3.2f} marcsec".format(rms)
 
-
     def on_change_metric(self, attr, old, new):
 
         self.selected_metric = new
         self.message = str()
         self.update_header()
         self.load_data(self.job_id, self.selected_metric, self.snr_cut)
-
-
-
-

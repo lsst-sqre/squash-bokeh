@@ -21,15 +21,8 @@ class Layout(BaseApp):
     def __init__(self):
         super().__init__()
 
-        # generic message shown in the header area
-        self.message = str()
-
         self.make_input_widgets()
         self.make_header()
-
-        self.load_data(self.selected_dataset,
-                       self.selected_metric,
-                       self.selected_period)
 
         self.make_plot_title()
         self.make_plot()
@@ -38,77 +31,22 @@ class Layout(BaseApp):
 
         self.make_layout()
 
-    @staticmethod
-    def get_sorted(data, key):
-        """Extract a list of values from a dict
-        and sort them alphabetically.
-
-        Parameters
-        ----------
-        data: dict
-            a dictionary from which we want
-            to extract the values
-        key: str
-            the corresponding dictionary key
-
-        Return
-        ------
-        s: list
-            a list of values sorted alphabetically
-        """
-        values = [data[d][key] for d in data]
-
-        return sorted(values)
-
     def make_input_widgets(self):
         """Define the widgets to select dataset, verification package,
         metrics and period
         """
-        # Datasets
-        self.datasets = self.get_datasets(default="hsc")
-
-        if 'ci_dataset' in self.args:
-            self.selected_dataset = self.args['ci_dataset']
-        else:
-            self.selected_dataset = self.datasets['default']
 
         self.datasets_widget = Select(title="Dataset:",
                                       value=self.selected_dataset,
                                       options=self.datasets['datasets'])
-        # Verification Packages
-        self.packages = self.get_packages(default='validate_drp')
-
-        if 'package' in self.args:
-            self.selected_package = self.args['package']
-        else:
-            self.selected_package = self.packages['default']
 
         self.packages_widget = Select(title="Verification package:",
                                       value=self.selected_package,
                                       options=self.packages['packages'])
-        # Metrics
-        self.metrics = self.get_metrics(package=self.selected_package)
-
-        metric_names = self.get_sorted(data=self.metrics,
-                                       key='name')
-
-        if 'metric' in self.args:
-            self.selected_metric = self.args['metric']
-        else:
-            self.selected_metric = metric_names[0]
 
         self.metrics_widget = Select(title="Metric:",
                                      value=self.selected_metric,
-                                     options=metric_names)
-        # Period
-        self.periods = {'periods': ['All', 'Last Year', 'Last 6 Months',
-                                    'Last Month'],
-                        'default': 'Last 6 Months'}
-
-        if 'period' in self.args:
-            self.selected_period = self.args['period']
-        else:
-            self.selected_period = self.periods['default']
+                                     options=self.metrics['metrics'])
 
         active = self.periods['periods'].index(self.selected_period)
 
@@ -141,8 +79,8 @@ class Layout(BaseApp):
 
         metric_name = self.selected_metric
 
-        display_name = self.metrics[metric_name]['display_name']
-        description = self.metrics[metric_name]['description']
+        display_name = self.metrics_meta[metric_name]['display_name']
+        description = self.metrics_meta[metric_name]['description']
 
         self.plot_title.text = "<p align='center'><strong>" \
                                "{}:</strong> {}</p>".format(display_name,
@@ -164,7 +102,7 @@ class Layout(BaseApp):
         self.plot.legend.location = 'top_right'
 
         hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
-                                    ("Job ID", "@ci_id"),
+                                    ("CI ID", "@ci_id"),
                                     ("Metric measurement", "@value"),
                                     ("# of packages changed", "@count")])
 
@@ -172,11 +110,11 @@ class Layout(BaseApp):
 
         # Measurements
         self.plot.line(x='time', y='value', source=self.cds,
-                       legend="Measurements", color="gray")
+                       legend="KPM", color="gray")
 
         self.plot.circle(x='time', y='value', source=self.cds,
                          color="gray", fill_color="white", size=12,
-                         legend="Measurements")
+                         legend="KPM")
 
         # Code changes
         self.plot.add_layout(LinearAxis(y_range_name="pkgs_changed",
@@ -221,8 +159,8 @@ class Layout(BaseApp):
 
         metric_name = self.selected_metric
 
-        display_name = self.metrics[metric_name]['display_name']
-        unit = self.metrics[metric_name]['unit']
+        display_name = self.metrics_meta[metric_name]['display_name']
+        unit = self.metrics_meta[metric_name]['unit']
 
         if unit:
             self.plot.yaxis[0].axis_label = "{} [{}]".format(display_name,
@@ -245,7 +183,7 @@ class Layout(BaseApp):
 
         metric_name = self.selected_metric
 
-        reference = self.metrics[metric_name]['reference']
+        reference = self.metrics_meta[metric_name]['reference']
 
         url = reference['url']
         doc = reference['doc']
@@ -272,16 +210,36 @@ class Layout(BaseApp):
 
         metric_name = self.selected_metric
 
-        display_name = self.metrics[metric_name]['display_name']
-        unit = self.metrics[metric_name]['unit']
+        display_name = self.metrics_meta[metric_name]['display_name']
+        unit = self.metrics_meta[metric_name]['unit']
         if unit:
             title = "{} [{}]".format(display_name, unit)
         else:
             title = "{}".format(display_name)
 
-        # Job ID
+        # CI ID
         template = '<a href="<%= ci_url %>" target=_blank ><%= value %></a>'
         ci_url_formatter = HTMLTemplateFormatter(template=template)
+
+        if self.selected_metric == "validate_drp.AM1" or \
+           self.selected_metric == "validate_drp.AM2":
+
+            # Drill down app, it uses the job_id to access the data blobs
+            app_url = "/dash/AMx?job_id=<%= job_id %>" \
+                     "&metric={}&ci_id=<%= ci_id %>" \
+                     "&ci_dataset={}".format(self.selected_metric,
+                                             self.selected_dataset)
+
+            template = '<a href="{}" ><%= parseFloat(value).toFixed(3) %>' \
+                       '</a>'.format(app_url)
+
+        else:
+            template = "<%= parseFloat(value).toFixed(3) %>"
+
+        # https://squash-restful-api-demo.lsst.codes/AMx?job_id=885
+        # &metric=validate_drp.AM1
+
+        app_url_formatter = HTMLTemplateFormatter(template=template)
 
         # Packages
         template = """<% for (x in git_urls) {
@@ -298,10 +256,10 @@ class Layout(BaseApp):
                         sortable=True, default_sort='descending',
                         width=Layout.SMALL),
             TableColumn(field="ci_id", formatter=ci_url_formatter,
-                        title="Job ID", sortable=False,
+                        title="CI ID", sortable=False,
                         width=Layout.SMALL),
-            TableColumn(field='value', title=title, sortable=False,
-                        width=Layout.SMALL),
+            TableColumn(field='value', formatter=app_url_formatter,
+                        title=title, sortable=False, width=Layout.SMALL),
             # Give room for a large list of package names
             TableColumn(field="package_names", title="Code changes",
                         formatter=git_url_formatter, width=Layout.XLARGE,

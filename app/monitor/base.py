@@ -1,7 +1,6 @@
 import os
 import sys
 from datetime import datetime
-import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource
@@ -13,22 +12,26 @@ from api_helper import APIHelper # noqa
 
 
 class BaseApp(APIHelper):
+
     def __init__(self):
         super().__init__()
         self.doc = curdoc()
+
+        self.message = str()
+
+        self.empty = {'job_id': [], 'time': [], 'date_created': [],
+                      'value': [], 'ci_id': [], 'ci_url': [], 'count': [],
+                      'package_names': [], 'git_urls': []}
+
+        self.cds = ColumnDataSource(data=self.empty)
+
         self.args = self.parse_args()
 
-        self.measurements = pd.DataFrame()
-        self.code_changes = pd.DataFrame()
+        self.validate_inputs()
 
-        self.cds = ColumnDataSource(data={'time': [],
-                                          'date_created': [],
-                                          'value': [],
-                                          'ci_id': [],
-                                          'ci_url': [],
-                                          'count': [],
-                                          'package_names': [],
-                                          'git_urls': []})
+        self.load_data(self.selected_dataset,
+                       self.selected_metric,
+                       self.selected_period)
 
     def parse_args(self):
 
@@ -39,6 +42,45 @@ class BaseApp(APIHelper):
             parsed_args[key] = args[key][0].decode("utf-8")
 
         return parsed_args
+
+    def validate_inputs(self):
+
+        # Datasets
+        self.datasets = self.get_datasets(default="cfht")
+
+        if 'ci_dataset' in self.args:
+            self.selected_dataset = self.args['ci_dataset']
+        else:
+            self.selected_dataset = self.datasets['default']
+
+        # Verification Packages
+        self.packages = self.get_packages(default='validate_drp')
+
+        if 'package' in self.args:
+            self.selected_package = self.args['package']
+        else:
+            self.selected_package = self.packages['default']
+
+        # Metrics
+        self.metrics = self.get_metrics(package=self.selected_package,
+                                        default='validate_drp.AM1')
+
+        if 'metric' in self.args:
+            self.selected_metric = self.args['metric']
+        else:
+            self.selected_metric = self.metrics['default']
+
+        self.metrics_meta = self.get_metrics_meta(self.selected_package)
+
+        # Period
+        self.periods = {'periods': ['All', 'Last Year', 'Last 6 Months',
+                                    'Last Month'],
+                        'default': 'Last 6 Months'}
+
+        if 'period' in self.args:
+            self.selected_period = self.args['period']
+        else:
+            self.selected_period = self.periods['default']
 
     def load_data(self, selected_dataset, selected_metric,
                   selected_period):
@@ -96,14 +138,6 @@ class BaseApp(APIHelper):
         """ Create a bokeh column data source for the
         selected dataset and period
         """
-
-        # Use this empty dataframe to reset the column datasource,
-        # column names must match
-        df = pd.DataFrame({'time': [], 'date_created': [],
-                           'value': [], 'ci_id': [], 'ci_url': [],
-                           'packages': [], 'count': [], 'package_names': [],
-                           'git_urls': []})
-
         if self.measurements.size > 0:
 
             # Add packages and count columns
@@ -117,9 +151,12 @@ class BaseApp(APIHelper):
             package_names, git_urls = self.format_package_data(df['packages'])
 
             df['package_names'] = package_names
+
             df['git_urls'] = git_urls
 
-        self.cds.data = df.to_dict(orient='list')
+            self.cds.data = df.to_dict(orient='list')
+        else:
+            self.cds.data = self.empty
 
     def set_title(self, title):
         self.doc.title = title

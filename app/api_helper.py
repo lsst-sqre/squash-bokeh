@@ -35,7 +35,7 @@ class APIHelper:
 
         return endpoint_urls
 
-    def get_api_data(self, endpoint, params=None):
+    def get_api_data(self, endpoint, item=None, params=None):
         """Return data from an SQuaSH API endpoint as a python
         dictionary.
 
@@ -56,18 +56,22 @@ class APIHelper:
         """
         endpoint_urls = self.get_api_endpoint_urls()
 
+        url = endpoint_urls[endpoint]
+
+        if item:
+            url = "{}/{}".format(url, item)
+
         data = None
         if endpoint_urls:
             try:
-                r = self.session.get(endpoint_urls[endpoint],
-                                     params=params)
+                r = self.session.get(url, params=params)
                 data = r.json()
             except requests.exceptions.RequestException as e:
                 print(e)
 
         return data
 
-    def get_api_data_as_pandas_df(self, endpoint, params=None):
+    def get_api_data_as_pandas_df(self, endpoint, item=None, params=None):
         """Return data from a SQuaSH API endpoint as a pandas
         dataframe.
 
@@ -86,7 +90,7 @@ class APIHelper:
             a pandas dataframe with the contend returned
             from the API.
         """
-        data = self.get_api_data(endpoint, params)
+        data = self.get_api_data(endpoint, item, params)
 
         df = pd.DataFrame()
         if data:
@@ -158,15 +162,17 @@ class APIHelper:
         return {'datasets': sorted_datasets,
                 'default': default_dataset}
 
-    def get_metrics(self, package):
-        """Get a list of metric objects for a given
-        verification package and return a dict indexed
-        by the metric name
+    def get_metrics(self, package, default=None):
+        """Get a list of metrics for a given
+        verification package from the SQuaSH API
 
         Parameters
         ----------
         package: str
             name of the verification package, e.g. `validate_drp`
+
+        default: str
+            the default metric to be used.
 
         Return
         ------
@@ -176,12 +182,37 @@ class APIHelper:
         data = self.get_api_data('metrics',
                                  params={'package': package})
 
-        metrics = dict()
+        metrics = [metric['name'] for metric in data['metrics']]
 
-        for metric in data['metrics']:
-            metrics[metric['name']] = metric
+        if metrics:
+            sorted_metrics = sorted(metrics, key=str.lower)
+            default_metric = sorted_metrics[0]
 
-        return metrics
+            if default and default in metrics:
+                default_metric = default
+
+        return {'metrics': sorted_metrics,
+                'default': default_metric}
+
+    def get_metrics_meta(self, package):
+        """Returns a dict index by metric name with
+        metric metadata for a give package
+
+        Parameters
+        ----------
+        package: str
+            name of the verification package, e.g. `validate_drp`
+
+        Return
+        ------
+        metrics meta: dict
+            a dict indexed by metric name
+        """
+
+        data = self.get_api_data('metrics',
+                                 params={'package': package})
+
+        return {metric['name']: metric for metric in data['metrics']}
 
     def get_specs(self, metric, default=None):
         """Get the list of specification names for a given

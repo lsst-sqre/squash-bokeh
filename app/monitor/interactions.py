@@ -15,15 +15,17 @@ class Interactions(Layout):
         self.selected_package = new
 
         self.metrics = self.get_metrics(package=self.selected_package)
-        metric_names = self.get_sorted(data=self.metrics, key='name')
-        self.selected_metric = metric_names[0]
+
+        self.selected_metric = self.metrics['metrics'][0]
+
+        self.metrics_meta = self.get_metrics_meta(self.selected_package)
 
         # This will trigger a metric change, and will update the datasource
         # with measurements for the new selected metric.
 
         # We can preserve the code changes and the period selection
 
-        self.metrics_widget.options = metric_names
+        self.metrics_widget.options = self.metrics['metrics']
 
         self.load_measurements(self.selected_dataset, self.selected_metric,
                                self.selected_period)

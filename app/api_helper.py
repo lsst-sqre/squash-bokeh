@@ -162,15 +162,17 @@ class APIHelper:
         return {'datasets': sorted_datasets,
                 'default': default_dataset}
 
-    def get_metrics(self, package):
-        """Get a list of metric objects for a given
-        verification package and return a dict indexed
-        by the metric name
+    def get_metrics(self, package, default=None):
+        """Get a list of metrics for a given
+        verification package from the SQuaSH API
 
         Parameters
         ----------
         package: str
             name of the verification package, e.g. `validate_drp`
+
+        default: str
+            the default metric to be used.
 
         Return
         ------
@@ -180,12 +182,37 @@ class APIHelper:
         data = self.get_api_data('metrics',
                                  params={'package': package})
 
-        metrics = dict()
+        metrics = [metric['name'] for metric in data['metrics']]
 
-        for metric in data['metrics']:
-            metrics[metric['name']] = metric
+        if metrics:
+            sorted_metrics = sorted(metrics, key=str.lower)
+            default_metric = sorted_metrics[0]
 
-        return metrics
+            if default and default in metrics:
+                default_metric = default
+
+        return {'metrics': sorted_metrics,
+                'default': default_metric}
+
+    def get_metrics_meta(self, package):
+        """Returns a dict index by metric name with
+        metric metadata for a give package
+
+        Parameters
+        ----------
+        package: str
+            name of the verification package, e.g. `validate_drp`
+
+        Return
+        ------
+        metrics meta: dict
+            a dict indexed by metric name
+        """
+
+        data = self.get_api_data('metrics',
+                                 params={'package': package})
+
+        return {metric['name']: metric for metric in data['metrics']}
 
     def get_specs(self, metric, default=None):
         """Get the list of specification names for a given

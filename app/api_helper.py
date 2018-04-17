@@ -35,7 +35,7 @@ class APIHelper:
 
         return endpoint_urls
 
-    def get_api_data(self, endpoint, params=None):
+    def get_api_data(self, endpoint, item=None, params=None):
         """Return data from an SQuaSH API endpoint as a python
         dictionary.
 
@@ -56,18 +56,22 @@ class APIHelper:
         """
         endpoint_urls = self.get_api_endpoint_urls()
 
+        url = endpoint_urls[endpoint]
+
+        if item:
+            url = "{}/{}".format(url, item)
+
         data = None
         if endpoint_urls:
             try:
-                r = self.session.get(endpoint_urls[endpoint],
-                                     params=params)
+                r = self.session.get(url, params=params)
                 data = r.json()
             except requests.exceptions.RequestException as e:
                 print(e)
 
         return data
 
-    def get_api_data_as_pandas_df(self, endpoint, params=None):
+    def get_api_data_as_pandas_df(self, endpoint, item=None, params=None):
         """Return data from a SQuaSH API endpoint as a pandas
         dataframe.
 
@@ -86,7 +90,7 @@ class APIHelper:
             a pandas dataframe with the contend returned
             from the API.
         """
-        data = self.get_api_data(endpoint, params)
+        data = self.get_api_data(endpoint, item, params)
 
         df = pd.DataFrame()
         if data:

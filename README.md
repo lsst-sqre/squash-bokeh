@@ -1,12 +1,11 @@
 # squash-bokeh
-SQuaSH bokeh microservice
 
-![SQuaSH bokeh microservice](squash-bokeh.png)
+The SQuaSH Bokeh serves the squash-bokeh apps, we use the Bokeh plotting library for rich interactive visualizations. You can learn more about SQuaSH at [SQR-009](https://sqr-009.lsst.io).
 
 
 ## Requirements 
 
-`squash-bokeh` requires the [squash-api](https://github.com/lsst-sqre/squash-api).
+`squash-bokeh` requires the [squash-restful-api](https://github.com/lsst-sqre/squash-restful-api) microservice.
 
 ### Kubernetes deployment
 
@@ -102,9 +101,6 @@ pip install -r requirements.txt
 ```
 
 2. Run the `squash-bokeh` 
-
-NOTE: see instructions on how to run the [squash-api](https://github.com/lsst-sqre/squash-api)
- which is required by `squash-bokeh`
 
 ```
 export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment

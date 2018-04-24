@@ -16,5 +16,5 @@ EXPOSE 5006
 CMD bokeh serve --use-xheaders --allow-websocket-origin=$SQUASH_BOKEH_HOST \
     --allow-websocket-origin=$SQUASH_DASH_HOST \
     app/AMx \
-    app/monitor
+    app/code_changes
 

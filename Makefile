@@ -6,7 +6,8 @@ DEPLOYMENT_TEMPLATE = kubernetes/deployment-template.yaml
 DEPLOYMENT_CONFIG = kubernetes/deployment.yaml
 SERVICE_CONFIG = kubernetes/service.yaml
 
-build: check-tag
+build: check-tag check-bokeh-apps
+	sed -e "s|{{ BOKEH_APPS }}|${BOKEH_APPS}|" Dockerfile-template > Dockerfile 
 	docker build -t $(PREFIX):${TAG} .
 
 push: check-tag
@@ -44,3 +45,5 @@ clean:
 check-tag:
 	@if test -z ${TAG}; then echo "Error: TAG is undefined."; exit 1; fi
 
+check-bokeh-apps:	
+	@if test -z "${BOKEH_APPS}"; then echo "Error: BOKEH_APPS is undefined."; exit 1; fi

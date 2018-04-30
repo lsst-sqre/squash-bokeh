@@ -119,6 +119,7 @@ class APIHelper:
         packages = self.get_api_data('packages')['packages']
 
         default_package = None
+        sorted_packages = []
 
         if packages:
             sorted_packages = sorted(packages, key=str.lower)
@@ -183,6 +184,9 @@ class APIHelper:
                                  params={'package': package})
 
         metrics = [metric['name'] for metric in data['metrics']]
+
+        sorted_metrics = metrics
+        default_metric = None
 
         if metrics:
             sorted_metrics = sorted(metrics, key=str.lower)

@@ -5,6 +5,7 @@ class Interactions(Layout):
     def __init__(self):
         super().__init__()
 
+        self.datasets_widget.on_change('value', self.on_change_dataset)
         self.packages_widget.on_change('value', self.on_change_package)
         self.metrics_widget.on_change('value', self.on_change_metric)
         self.period_widget.on_change('active', self.on_change_period)
@@ -26,7 +27,7 @@ class Interactions(Layout):
 
         self.metrics_widget.options = self.metrics['metrics']
 
-        self.load_measurements(self.selected_metric,
+        self.load_measurements(self.selected_dataset, self.selected_metric,
                                self.selected_period)
 
         self.update_datasource()
@@ -36,11 +37,21 @@ class Interactions(Layout):
         self.update_footnote()
         self.update_table()
 
+    def on_change_dataset(self, attr, old, new):
+
+        self.selected_dataset = new
+
+        self.load_data(self.selected_dataset, self.selected_metric,
+                       self.selected_period)
+
+        self.update_plot()
+        self.update_table()
+
     def on_change_period(self, attr, old, new):
 
         self.selected_period = self.periods['periods'][new]
 
-        self.load_data(self.selected_metric,
+        self.load_data(self.selected_dataset, self.selected_metric,
                        self.selected_period)
 
         self.update_plot()
@@ -51,7 +62,7 @@ class Interactions(Layout):
         self.selected_metric = new
 
         # No need to reload code changes here
-        self.load_measurements(self.selected_metric,
+        self.load_measurements(self.selected_dataset, self.selected_metric,
                                self.selected_period)
 
         self.update_datasource()

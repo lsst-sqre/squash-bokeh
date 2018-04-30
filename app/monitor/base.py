@@ -19,9 +19,9 @@ class BaseApp(APIHelper):
 
         self.message = str()
 
-        self.empty = {'job_id': [], 'time': [], 'date_created': [],
-                      'value': [], 'ci_id': [], 'ci_url': [], 'count': [],
-                      'package_names': [], 'git_urls': []}
+        self.empty = {'time': [],
+                      'date_created': [],
+                      'value': []}
 
         self.cds = ColumnDataSource(data=self.empty)
 
@@ -29,8 +29,7 @@ class BaseApp(APIHelper):
 
         self.validate_inputs()
 
-        self.load_data(self.selected_dataset,
-                       self.selected_metric,
+        self.load_data(self.selected_metric,
                        self.selected_period)
 
     def parse_args(self):
@@ -45,16 +44,8 @@ class BaseApp(APIHelper):
 
     def validate_inputs(self):
 
-        # Datasets
-        self.datasets = self.get_datasets(default="cfht")
-
-        if 'ci_dataset' in self.args:
-            self.selected_dataset = self.args['ci_dataset']
-        else:
-            self.selected_dataset = self.datasets['default']
-
         # Verification Packages
-        self.packages = self.get_packages(default='validate_drp')
+        self.packages = self.get_packages(default='demo1')
 
         if 'package' in self.args:
             self.selected_package = self.args['package']
@@ -63,7 +54,7 @@ class BaseApp(APIHelper):
 
         # Metrics
         self.metrics = self.get_metrics(package=self.selected_package,
-                                        default='validate_drp.AM1')
+                                        default='demo1.ZeropointRMS')
 
         if 'metric' in self.args:
             self.selected_metric = self.args['metric']
@@ -82,79 +73,31 @@ class BaseApp(APIHelper):
         else:
             self.selected_period = self.periods['default']
 
-    def load_data(self, selected_dataset, selected_metric,
-                  selected_period):
+    def load_data(self, selected_metric, selected_period):
 
-        self.load_measurements(selected_dataset,
-                               selected_metric,
-                               selected_period)
-
-        self.load_code_changes(selected_dataset,
-                               selected_period)
+        self.load_measurements(selected_metric, selected_period)
 
         self.update_datasource()
 
-    def load_code_changes(self, ci_dataset, period):
-
-        self.code_changes = self.get_api_data_as_pandas_df(
-            endpoint='code_changes',
-            params={'ci_dataset': ci_dataset,
-                    'period': period})
-
-    def load_measurements(self, ci_dataset, metric, period):
+    def load_measurements(self, metric, period):
 
         self.measurements = self.get_api_data_as_pandas_df(
             endpoint='monitor',
-            params={'ci_dataset': ci_dataset,
-                    'metric': metric,
+            params={'metric': metric,
                     'period': period})
 
-        # Add datetime objects from the string representation
+        # Add datetime object in addition to string representation
         time = [datetime.strptime(x, "%Y-%m-%dT%H:%M:%SZ")
                 for x in self.measurements['date_created']]
 
         self.measurements['time'] = time
-
-    @staticmethod
-    def format_package_data(packages):
-
-        package_names = []
-        git_urls = []
-
-        for i, sublist in enumerate(packages):
-            package_names.append([])
-            git_urls.append([])
-            # can be a list or a nan
-            if type(sublist) == list:
-                for package in sublist:
-                    package_names[i].append(package[0])
-                    git_urls[i].append("{}/commit/{}".format(
-                        package[2].replace('.git', ''),
-                        package[1]))
-
-        return package_names, git_urls
 
     def update_datasource(self):
         """ Create a bokeh column data source for the
         selected dataset and period
         """
         if self.measurements.size > 0:
-
-            # Add packages and count columns
-            df = self.measurements.merge(self.code_changes,
-                                         on='ci_id', how='left')
-
-            # Replace NaN with zeros in count
-            df['count'] = df['count'].fillna(0)
-
-            # Add list of package names and git urls
-            package_names, git_urls = self.format_package_data(df['packages'])
-
-            df['package_names'] = package_names
-
-            df['git_urls'] = git_urls
-
-            self.cds.data = df.to_dict(orient='list')
+            self.cds.data = self.measurements.to_dict(orient='list')
         else:
             self.cds.data = self.empty
 

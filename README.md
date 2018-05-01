@@ -12,10 +12,17 @@ The SQuaSH Bokeh serves the squash-bokeh apps, we use the Bokeh plotting library
 Assuming you have kubectl configured to access your GCE cluster, you can deploy `squash-bokeh` using:
 
 ```
-export BOKEH_APPS="app/code_changes app/AMx" # list of bokeh apps you want to deploy
-export TAG=latest 
-make build push deployment
+TAG=latest make deployment
 ```
+
+NOTE: the bokeh apps to be deployed can be configured by setting the following variable:
+```
+export SQUASH_BOKEH_APPS="code_changes AMx"
+```
+the default is to deploy all the bokeh apps in the `/app` folder. 
+
+Also, it must be consistent with the bokeh apps configured in the [squash](https://github.com/lsst-sqre/squash) deployment.
+
 
 ### Debugging
 

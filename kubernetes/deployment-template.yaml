@@ -37,6 +37,8 @@ spec:
               value: {{ SQUASH_BOKEH_HOST }}
             - name: SQUASH_API_URL
               value: {{ SQUASH_API_URL }}
+            - name: SQUASH_BOKEH_APPS
+              value: {{ SQUASH_BOKEH_APPS }}
       volumes:
         - name: tls-certs
           secret:

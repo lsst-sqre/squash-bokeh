@@ -48,9 +48,14 @@ if [ "$NAMESPACE" == "squash-prod" ]; then
     SQUASH_API_URL="https://squash-restful-api.lsst.codes"
 fi
 
+if [ -z "$SQUASH_BOKEH_APPS" ]; then
+    SQUASH_BOKEH_APPS="monitor code_changes AMx"
+fi
+
 sed -e "
 s/{{ TAG }}/${TAG}/
 s/{{ SQUASH_DASH_HOST }}/${SQUASH_DASH_HOST}/
 s/{{ SQUASH_BOKEH_HOST }}/${SQUASH_BOKEH_HOST}/
 s|{{ SQUASH_API_URL }}|\"${SQUASH_API_URL}\"|
+s|{{ SQUASH_BOKEH_APPS }}|\"${SQUASH_BOKEH_APPS}\"|
 " $1 > $2

@@ -12,8 +12,7 @@ RUN apt-get update \
 RUN pip install --default-timeout=120 --no-cache-dir -r requirements.txt
 EXPOSE 5006
 # http://bokeh.pydata.org/en/latest/docs/user_guide/server.html#reverse-proxying-with-nginx-and-ssl
-
+WORKDIR /opt/app
 CMD bokeh serve --use-xheaders --allow-websocket-origin=$SQUASH_BOKEH_HOST \
-    --allow-websocket-origin=$SQUASH_DASH_HOST \
-    {{ BOKEH_APPS }} 
+    --allow-websocket-origin=$SQUASH_DASH_HOST $SQUASH_BOKEH_APPS 
 

@@ -46,7 +46,8 @@ class BaseApp(APIHelper):
     def validate_inputs(self):
 
         # Datasets
-        self.datasets = self.get_datasets(default="cfht")
+        self.datasets = self.get_datasets(default="validation_data_cfht",
+                                          ignore=["decam"])
 
         if 'ci_dataset' in self.args:
             self.selected_dataset = self.args['ci_dataset']

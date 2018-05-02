@@ -131,7 +131,7 @@ class APIHelper:
         return {'packages': sorted_packages,
                 'default': default_package}
 
-    def get_datasets(self, default=None):
+    def get_datasets(self, default=None, ignore=None):
         """Get a list of datasets from the SQuaSH API.
 
         Parameters
@@ -141,20 +141,29 @@ class APIHelper:
 
         Return
         ------
-        datasets : list
+        datasets: list
             list of dataset names.
-        default : str
+        default: str
             the default dataset, if the default dataset
             provided as parameter is valid then use that
             instead of the default dataset obtained from
             the API.
+        ignore: list
+            list of dataset names to remove from the list
+            of datasets returned from the SQuaSH API
         """
         datasets = self.get_api_data('datasets')['datasets']
 
         default_dataset = None
 
         if datasets:
+
+            if ignore:
+                datasets = [dataset for dataset in datasets
+                            if dataset not in ignore]
+
             sorted_datasets = sorted(datasets, key=str.lower)
+
             default_dataset = sorted_datasets[0]
 
             if default and default in datasets:

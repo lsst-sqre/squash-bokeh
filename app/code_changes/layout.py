@@ -13,8 +13,8 @@ class Layout(BaseApp):
     """Define the Monitor App widgets and the Bokeh document layout.
     """
     # default sizes for widgets
-    SMALL = 175
-    MEDIUM = 350
+    SMALL = 250
+    MEDIUM = 500
     LARGE = 1000
     XLARGE = 3000
 
@@ -98,23 +98,26 @@ class Layout(BaseApp):
         self.plot.x_range.range_padding = 0
         self.plot.xaxis.axis_label = 'Time (UTC)'
 
-        self.plot.legend.click_policy = 'hide'
-        self.plot.legend.location = 'top_right'
-
         hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
                                     ("CI ID", "@ci_id"),
                                     ("Metric measurement", "@value"),
+                                    ("Filter", "@filter_name"),
                                     ("# of packages changed", "@count")])
 
         self.plot.add_tools(hover)
 
-        # Measurements
-        self.plot.line(x='time', y='value', source=self.cds,
-                       legend="KPM", color="gray")
+        self.plot.circle(x='time', y='value',
+                         color='color', legend='filter_name',
+                         source=self.cds, fill_color='white', size=12)
 
-        self.plot.circle(x='time', y='value', source=self.cds,
-                         color="gray", fill_color="white", size=12,
-                         legend="KPM")
+        # Legend
+        self.plot.background_fill_alpha = 0
+        self.plot.legend.location = 'top_right'
+        self.plot.legend.click_policy = 'hide'
+        self.plot.legend.orientation = 'horizontal'
+
+        # Toolbar
+        self.plot.toolbar.logo = None
 
         # Code changes
         self.plot.add_layout(LinearAxis(y_range_name="pkgs_changed",
@@ -273,7 +276,7 @@ class Layout(BaseApp):
         """
         datasets = widgetbox(self.datasets_widget, width=Layout.SMALL)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
-        metrics = widgetbox(self.metrics_widget, width=Layout.MEDIUM)
+        metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
 
         header = widgetbox(self.header_widget, width=Layout.LARGE)
         period = widgetbox(self.period_widget, width=Layout.LARGE)

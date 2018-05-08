@@ -13,8 +13,9 @@ class Layout(BaseApp):
     """Define the Monitor App widgets and the Bokeh document layout.
     """
     # default sizes for widgets
-    SMALL = 175
-    MEDIUM = 350
+    TINY = 175
+    SMALL = 250
+    MEDIUM = 500
     LARGE = 1000
     XLARGE = 3000
 
@@ -98,23 +99,26 @@ class Layout(BaseApp):
         self.plot.x_range.range_padding = 0
         self.plot.xaxis.axis_label = 'Time (UTC)'
 
-        self.plot.legend.click_policy = 'hide'
-        self.plot.legend.location = 'top_right'
-
         hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
                                     ("CI ID", "@ci_id"),
                                     ("Metric measurement", "@value"),
+                                    ("Filter", "@filter_name"),
                                     ("# of packages changed", "@count")])
 
         self.plot.add_tools(hover)
 
-        # Measurements
-        self.plot.line(x='time', y='value', source=self.cds,
-                       legend="KPM", color="gray")
+        self.plot.circle(x='time', y='value',
+                         color='color', legend='filter_name',
+                         source=self.cds, fill_color='white', size=12)
 
-        self.plot.circle(x='time', y='value', source=self.cds,
-                         color="gray", fill_color="white", size=12,
-                         legend="KPM")
+        # Legend
+        self.plot.background_fill_alpha = 0
+        self.plot.legend.location = 'top_right'
+        self.plot.legend.click_policy = 'hide'
+        self.plot.legend.orientation = 'horizontal'
+
+        # Toolbar
+        self.plot.toolbar.logo = None
 
         # Code changes
         self.plot.add_layout(LinearAxis(y_range_name="pkgs_changed",
@@ -200,7 +204,7 @@ class Layout(BaseApp):
         """Make a table synched with the plot
         """
         self.table = DataTable(source=self.cds, columns=[],
-                               width=Layout.LARGE, height=Layout.SMALL,
+                               width=Layout.LARGE, height=Layout.TINY,
                                editable=False, selectable=True,
                                fit_columns=False, scroll_to_selection=True)
 
@@ -252,14 +256,14 @@ class Layout(BaseApp):
         git_url_formatter = HTMLTemplateFormatter(template=template)
 
         columns = [
-            TableColumn(field="date_created", title="Time (UTC)",
-                        sortable=True, default_sort='descending',
-                        width=Layout.SMALL),
+            TableColumn(field="created_date", title="Time (UTC)",
+                        sortable=True, default_sor  t='descending',
+                        width=Layout.TINY),
             TableColumn(field="ci_id", formatter=ci_url_formatter,
                         title="CI ID", sortable=False,
-                        width=Layout.SMALL),
+                        width=Layout.TINY),
             TableColumn(field='value', formatter=app_url_formatter,
-                        title=title, sortable=False, width=Layout.SMALL),
+                        title=title, sortable=False, width=Layout.TINY),
             # Give room for a large list of package names
             TableColumn(field="package_names", title="Code changes",
                         formatter=git_url_formatter, width=Layout.XLARGE,
@@ -271,9 +275,9 @@ class Layout(BaseApp):
     def make_layout(self):
         """App layout
         """
-        datasets = widgetbox(self.datasets_widget, width=Layout.SMALL)
+        datasets = widgetbox(self.datasets_widget, width=Layout.TINY)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
-        metrics = widgetbox(self.metrics_widget, width=Layout.MEDIUM)
+        metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
 
         header = widgetbox(self.header_widget, width=Layout.LARGE)
         period = widgetbox(self.period_widget, width=Layout.LARGE)

@@ -21,7 +21,8 @@ class BaseApp(APIHelper):
 
         self.empty = {'job_id': [], 'time': [], 'date_created': [],
                       'value': [], 'ci_id': [], 'ci_url': [], 'count': [],
-                      'package_names': [], 'git_urls': []}
+                      'filter_name': [], 'color': [], 'package_names': [],
+                      'git_urls': []}
 
         self.cds = ColumnDataSource(data=self.empty)
 
@@ -102,6 +103,29 @@ class BaseApp(APIHelper):
             params={'ci_dataset': ci_dataset,
                     'period': period})
 
+    @staticmethod
+    def get_filter_color(filter_name):
+
+        if filter_name is None:
+            return 'gray'
+
+        name = filter_name.lower()
+
+        if 'u' in name:
+            color = 'magenta'
+        elif 'g' in name:
+            color = 'blue'
+        elif 'r' in name:
+            color = 'green'
+        elif 'i' in name:
+            color = 'gold'
+        elif 'z' in name:
+            color = 'orange'
+        elif 'y' in name:
+            color = 'red'
+
+        return color
+
     def load_measurements(self, ci_dataset, metric, period):
 
         self.measurements = self.get_api_data_as_pandas_df(
@@ -115,6 +139,12 @@ class BaseApp(APIHelper):
                 for x in self.measurements['date_created']]
 
         self.measurements['time'] = time
+
+        color = []
+        for filter_name in self.measurements['filter_name']:
+            color.append(self.get_filter_color(filter_name))
+
+        self.measurements['color'] = color
 
     @staticmethod
     def format_package_data(packages):

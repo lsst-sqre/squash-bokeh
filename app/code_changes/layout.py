@@ -13,6 +13,7 @@ class Layout(BaseApp):
     """Define the Monitor App widgets and the Bokeh document layout.
     """
     # default sizes for widgets
+    TINY = 175
     SMALL = 250
     MEDIUM = 500
     LARGE = 1000
@@ -203,7 +204,7 @@ class Layout(BaseApp):
         """Make a table synched with the plot
         """
         self.table = DataTable(source=self.cds, columns=[],
-                               width=Layout.LARGE, height=Layout.SMALL,
+                               width=Layout.LARGE, height=Layout.TINY,
                                editable=False, selectable=True,
                                fit_columns=False, scroll_to_selection=True)
 
@@ -255,14 +256,14 @@ class Layout(BaseApp):
         git_url_formatter = HTMLTemplateFormatter(template=template)
 
         columns = [
-            TableColumn(field="date_created", title="Time (UTC)",
-                        sortable=True, default_sort='descending',
-                        width=Layout.SMALL),
+            TableColumn(field="created_date", title="Time (UTC)",
+                        sortable=True, default_sor  t='descending',
+                        width=Layout.TINY),
             TableColumn(field="ci_id", formatter=ci_url_formatter,
                         title="CI ID", sortable=False,
-                        width=Layout.SMALL),
+                        width=Layout.TINY),
             TableColumn(field='value', formatter=app_url_formatter,
-                        title=title, sortable=False, width=Layout.SMALL),
+                        title=title, sortable=False, width=Layout.TINY),
             # Give room for a large list of package names
             TableColumn(field="package_names", title="Code changes",
                         formatter=git_url_formatter, width=Layout.XLARGE,
@@ -274,7 +275,7 @@ class Layout(BaseApp):
     def make_layout(self):
         """App layout
         """
-        datasets = widgetbox(self.datasets_widget, width=Layout.SMALL)
+        datasets = widgetbox(self.datasets_widget, width=Layout.TINY)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
         metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
 

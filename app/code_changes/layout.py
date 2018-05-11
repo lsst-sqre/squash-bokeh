@@ -256,8 +256,8 @@ class Layout(BaseApp):
         git_url_formatter = HTMLTemplateFormatter(template=template)
 
         columns = [
-            TableColumn(field="created_date", title="Time (UTC)",
-                        sortable=True, default_sor  t='descending',
+            TableColumn(field="date_created", title="Time (UTC)",
+                        sortable=True, default_sort='descending',
                         width=Layout.TINY),
             TableColumn(field="ci_id", formatter=ci_url_formatter,
                         title="CI ID", sortable=False,

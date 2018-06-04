@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 sys.path.append(os.path.join(BASE_DIR))
-from api_helper import APIHelper # noqa
+from api_helper import APIHelper  # noqa
 
 
 class BaseApp(APIHelper):
@@ -105,9 +105,13 @@ class BaseApp(APIHelper):
 
     @staticmethod
     def get_filter_color(filter_name):
+        """Assign a color based on the filter_name. Unknown filters
+        will be displayed in gray."""
+
+        color = 'gray'
 
         if filter_name is None:
-            return 'gray'
+            return color
 
         name = filter_name.lower()
 

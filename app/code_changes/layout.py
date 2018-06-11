@@ -7,6 +7,7 @@ from bokeh.models import HoverTool, Range1d, CustomJS, \
 from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter
 
 from base import BaseApp
+from kpm import make_kpm_plots
 
 
 class Layout(BaseApp):
@@ -62,13 +63,13 @@ class Layout(BaseApp):
 
     def update_header(self):
 
-        title_text = "<h2>The impact of code changes on" \
-                     " Key Performance Metrics</h2>"
+        title_text = "<h2>Key Performance Metrics</h2>"
 
         message_text = "<center><p style='color:red;'>{}</p>" \
                        "</center>".format(self.message)
 
         self.header_widget.text = "{}{}".format(title_text, message_text)
+
 
     def make_plot_title(self):
         """Plot title including metric display name and a description
@@ -94,6 +95,11 @@ class Layout(BaseApp):
                            tools="pan, wheel_zoom, xbox_zoom, \
                                   save, reset, tap",
                            active_scroll="wheel_zoom")
+
+        self.plot.height = Layout.SMALL
+        self.plot.width = Layout.LARGE
+        self.plot.toolbar_location = 'above'
+        self.plot.outline_line_color = None
 
         self.plot.x_range.follow = 'end'
         self.plot.x_range.range_padding = 0
@@ -272,23 +278,49 @@ class Layout(BaseApp):
 
         self.table.columns = columns
 
+    def make_kpm_layout(self):
+        """Layout for the KPM plot
+        """
+
+        kpm_layout = make_kpm_plots(self.kpm)
+
+        return kpm_layout
+
+    def make_code_changes_layout(self):
+        """Layout for code_changes
+        """
+        title_widget = Div()
+        title_widget.text = """<h2>The impact of code changes on Key
+                            Performance Metrics</h2>"""
+        title = widgetbox(title_widget, width=Layout.LARGE)
+
+        metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
+        period = widgetbox(self.period_widget, width=Layout.LARGE)
+        plot_title = widgetbox(self.plot_title, width=Layout.LARGE)
+        footnote = widgetbox(self.footnote, width=Layout.LARGE)
+
+        code_changes_layout = column(title,
+                                     metrics,
+                                     plot_title,
+                                     self.plot,
+                                     footnote,
+                                     self.table)
+        return code_changes_layout
+
     def make_layout(self):
         """App layout
         """
+        header = widgetbox(self.header_widget, width=Layout.LARGE)
+
         datasets = widgetbox(self.datasets_widget, width=Layout.TINY)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
-        metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
 
-        header = widgetbox(self.header_widget, width=Layout.LARGE)
-        period = widgetbox(self.period_widget, width=Layout.LARGE)
+        kpm_layout = self.make_kpm_layout()
+        code_changes_layout = self.make_code_changes_layout()
 
-        plot_title = widgetbox(self.plot_title, width=Layout.LARGE)
+        layout = column(header,
+                        row(datasets, packages),
+                        kpm_layout,
+                        code_changes_layout)
 
-        footnote = widgetbox(self.footnote, width=Layout.LARGE)
-
-        l = column(header,
-                   row(datasets, packages, metrics),
-                   period, plot_title, self.plot,
-                   footnote, self.table)
-
-        self.add_layout(l)
+        self.add_layout(layout)

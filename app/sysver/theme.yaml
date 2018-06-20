@@ -1,0 +1,21 @@
+attrs:
+  Plot:
+    outline_line_color: null
+    toolbar_location: above
+    min_border: 20
+    background_fill_color: "#fafafa"
+    plot_width: 500
+    plot_height: 500
+
+  Axis:
+    major_label_text_font_size: '10pt'
+    major_label_text_font_style: 'normal'
+    axis_label_text_font_size: '14pt'
+    axis_label_text_font_style: 'normal'
+    major_tick_line_cap: 'round'
+    axis_line_cap: 'round'
+    axis_line_width: 1
+    major_tick_line_width: 1
+
+  Grid:
+    grid_line_alpha: 0.5

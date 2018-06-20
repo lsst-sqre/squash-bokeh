@@ -31,6 +31,7 @@ class BaseApp(APIHelper):
         """Load the data blobs from the SQuaSH API for
         the the selected job
         """
+
         df = self.get_api_data_as_pandas_df(endpoint='blob', item=job_id,
                                             params={'metric': metric,
                                                     'name': metric})

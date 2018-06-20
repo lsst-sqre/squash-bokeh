@@ -30,7 +30,7 @@ class Layout(BaseApp):
     def make_layout(self):
         header = widgetbox(self.header_widget, width=Layout.LARGE)
         ave_temp = widgetbox(self.ave_temp_widget, width=Layout.SMALL)
-        layout = column(ave_temp, self.plot)
+        layout = column(header, ave_temp, self.plot)
         self.doc.add_root(layout)
 
     def make_paragraph(self):

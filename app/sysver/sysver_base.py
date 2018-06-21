@@ -1,6 +1,7 @@
 import os
 import sys
 
+from astropy import units as u
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource
 
@@ -36,16 +37,25 @@ class BaseApp(APIHelper):
                                                     'name': metric})
 
         temperatures = []
+        self.z_axis = {}
         if 'cameraBody_temperature_grid' in df:
             temperatures = df['cameraBody_temperature_grid']['value']
+            self.z_axis['label'] = df['cameraBody_temperature_grid']['label']
+            self.z_axis['units'] = u.Unit(df['cameraBody_temperature_grid']['unit'])
 
         positions = []
+        self.x_axis = {}
         if 'cameraBody_positions' in df:
             positions = df['cameraBody_positions']['value']
+            self.x_axis['label'] = df['cameraBody_positions']['label']
+            self.x_axis['units'] = u.Unit(df['cameraBody_positions']['unit'])
 
         angles = []
+        self.y_axis = {}
         if 'cameraBody_angles' in df:
             angles = df['cameraBody_angles']['value']
+            self.y_axis['label'] = df['cameraBody_angles']['label']
+            self.y_axis['units'] = u.Unit(df['cameraBody_angles']['unit'])
 
         self.cds.data = {'temperatures': temperatures, 'body_angle': angles, 'body_position': positions}
 

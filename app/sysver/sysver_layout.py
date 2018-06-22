@@ -46,7 +46,7 @@ class Layout(BaseApp):
         y_label = "{} [{}]".format(self.y_axis['label'], self.y_axis['units'].to_string())
         z_label = "{} [{}]".format(self.z_axis['label'], self.z_axis['units'].to_string())
 
-        self.plot = figure(tools="pan, box_zoom, wheel_zoom, reset",
+        self.plot = figure(tools="box_select, pan, box_zoom, wheel_zoom, reset",
                            active_scroll="wheel_zoom", x_axis_label=x_label,
                            y_axis_label=y_label)
 
@@ -58,8 +58,9 @@ class Layout(BaseApp):
         ]
         self.cds.data['colors'] = colors
 
-        self.plot.circle('body_position', 'body_angle', size=5, fill_color='colors', line_color=None,
-                         source=self.cds.data)
+        self.pcircle = self.plot.circle('body_position', 'body_angle', size=5, fill_color='colors',
+                                        line_color=None,
+                                        source=self.cds.data)
 
         palette = "{}256".format(cm.plasma.name.capitalize())
         color_mapper = LinearColorMapper(palette=palette, low=np.min(temperatures),
@@ -70,10 +71,13 @@ class Layout(BaseApp):
 
         self.plot.add_layout(color_bar, 'below')
 
-    def update_ave_temp(self):
-        avg_value = self.metric_value.get('value', '')
+    def update_ave_temp(self, average_value=None):
+        if average_value is None:
+            avg_value = self.metric_value.get('value', '')
+        else:
+            avg_value = average_value
         value_units = self.metric_value.get('units', '')
-        message = "<p>Average Temperature: {} {}</p>".format(avg_value, value_units.strip())
+        message = "<p>Average Temperature: {:.3f} {}</p>".format(avg_value, value_units.strip())
         self.ave_temp_widget.text = message
 
     def update_header(self):

@@ -3,7 +3,7 @@ from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import Figure
 from bokeh.models import HoverTool, Label
 
-from bokeh.models.widgets import DataTable, TableColumn
+from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter
 from base import BaseApp
 
 
@@ -198,13 +198,27 @@ class Layout(BaseApp):
             if display_name:
                 title = "{}".format(display_name)
 
+        template = None
+        if self.selected_metric == "camera.CameraBodySurfaceTemp":
+            # Drill down app, it uses the job_id to access the data blobs
+            app_url = "/dash/sysver?job_id=<%= job_id %>" \
+                      "&metric={}".format(self.selected_metric)
+
+            template = '<a href="{}" ><%= parseFloat(value).toFixed(3) %>' \
+                       '</a>'.format(app_url)
+
+        else:
+            template = "<%= parseFloat(value).toFixed(3) %>"
+
+        app_url_formatter = HTMLTemplateFormatter(template=template)
+
         columns = [
             TableColumn(field="date_created", title="Time (UTC)",
                         sortable=True, default_sort='descending',
                         width=Layout.SMALL),
-            TableColumn(field='value',
+            TableColumn(field='value', formatter=app_url_formatter,
                         title=title, sortable=False, width=Layout.SMALL),
-            ]
+        ]
 
         self.table.columns = columns
 

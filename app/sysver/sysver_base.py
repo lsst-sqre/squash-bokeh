@@ -16,7 +16,7 @@ from api_helper import APIHelper # noqa
 class BaseApp(APIHelper):
 
     # Metrics associated with this app
-    METRICS = ["sysver.CameraBodySurfaceTemp"]
+    METRICS = ["sysver.CameraBodySurfaceTemp", "camera.CameraBodySurfaceTemp"]
 
     def __init__(self):
         super().__init__()

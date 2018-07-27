@@ -31,7 +31,6 @@ class BaseApp(APIHelper):
         """Load the data blobs from the SQuaSH API for
         the the selected job
         """
-        print("Job ID:", job_id)
         df = self.get_api_data_as_pandas_df(endpoint='blob', item=job_id,
                                             params={'metric': metric,
                                                     'name': metric})
@@ -93,7 +92,6 @@ class BaseApp(APIHelper):
 
         # default metric
         self.selected_metric = BaseApp.METRICS[0]
-        print("G:", self.args)
         if 'metric' in self.args:
             metric = self.args['metric']
             if metric in BaseApp.METRICS:

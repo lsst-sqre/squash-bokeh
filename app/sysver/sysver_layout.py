@@ -22,7 +22,6 @@ class Layout(BaseApp):
         self.make_header()
         self.make_paragraph()
         self.make_scatterplot()
-        self.make_layout()
 
     def make_header(self):
         """Header area for the app, include a title and
@@ -71,14 +70,18 @@ class Layout(BaseApp):
 
         self.plot.add_layout(color_bar, 'below')
 
-    def update_ave_temp(self, average_value=None):
+    def format_ave_temp_text(self, average_value=None):
         if average_value is None:
             avg_value = self.metric_value.get('value', '')
         else:
             avg_value = average_value
         value_units = self.metric_value.get('units', '')
-        message = "<p>Average Temperature: {:.3f} {}</p>".format(avg_value, value_units.strip())
-        self.ave_temp_widget.text = message
+
+        text = "Average Temperature: {:.3f} {}".format(avg_value, value_units.strip())
+        return text
+
+    def update_ave_temp(self, average_value=None):
+        self.ave_temp_widget.text = self.format_ave_temp_text(average_value)
 
     def update_header(self):
         self.header_widget.text = "<p style='color:red;'>{}</p>".format(self.message)

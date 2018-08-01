@@ -205,11 +205,11 @@ class Layout(BaseApp):
             app_url = "/dash/sysver?job_id=<%= job_id %>" \
                       "&metric={}".format(self.selected_metric)
 
-            template = '<a href="{}" ><%= parseFloat(value).toFixed(3) %>' \
+            template = '<a href="{}" ><%= formatted_value %>' \
                        '</a>'.format(app_url)
 
         else:
-            template = "<%= parseFloat(value).toFixed(3) %>"
+            template = "<%= formatted_value %>"
 
         app_url_formatter = HTMLTemplateFormatter(template=template)
 

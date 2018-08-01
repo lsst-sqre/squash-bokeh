@@ -21,7 +21,9 @@ class BaseApp(APIHelper):
 
         self.empty = {'time': [],
                       'date_created': [],
-                      'value': []}
+                      'job_id': [],
+                      'value': [],
+                      'formatted_value': []}
 
         self.cds = ColumnDataSource(data=self.empty)
 
@@ -91,6 +93,13 @@ class BaseApp(APIHelper):
                 for x in self.measurements['date_created']]
 
         self.measurements['time'] = time
+
+        # DM-14376
+        # used for display the five most significant digits only
+        formatted_value = ["{0:.5g}".format(value)
+                           for value in self.measurements['value']]
+
+        self.measurements['formatted_value'] = formatted_value
 
     def update_datasource(self):
         """ Create a bokeh column data source for the

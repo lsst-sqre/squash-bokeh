@@ -32,6 +32,7 @@ class Interactions(Layout):
         self.update_datasource()
 
         self.update_header()
+        self.update_plot_title()
         self.update_plot()
         self.update_footnote()
         self.update_table()

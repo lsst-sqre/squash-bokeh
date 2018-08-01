@@ -230,15 +230,15 @@ class Layout(BaseApp):
 
             # Drill down app, it uses the job_id to access the data blobs
             app_url = "/dash/AMx?job_id=<%= job_id %>" \
-                     "&metric={}&ci_id=<%= ci_id %>" \
-                     "&ci_dataset={}".format(self.selected_metric,
-                                             self.selected_dataset)
+                      "&metric={}&ci_id=<%= ci_id %>" \
+                      "&ci_dataset={}".format(self.selected_metric,
+                                              self.selected_dataset)
 
-            template = '<a href="{}" ><%= parseFloat(value).toFixed(3) %>' \
+            template = '<a href="{}" ><%= formatted_value %>' \
                        '</a>'.format(app_url)
 
         else:
-            template = "<%= parseFloat(value).toFixed(3) %>"
+            template = "<%= formatted_value %>"
 
         # https://squash-restful-api-demo.lsst.codes/AMx?job_id=885
         # &metric=validate_drp.AM1

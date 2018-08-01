@@ -11,6 +11,7 @@ class Layout(BaseApp):
     """Define the Monitor App widgets and the Bokeh document layout.
     """
     # default sizes for widgets
+    TINY = 100
     SMALL = 250
     MEDIUM = 500
     LARGE = 1000
@@ -216,6 +217,8 @@ class Layout(BaseApp):
             TableColumn(field="date_created", title="Time (UTC)",
                         sortable=True, default_sort='descending',
                         width=Layout.SMALL),
+            TableColumn(field="job_id", title="Job ID", sortable=True,
+                        default_sort='descending', width=Layout.TINY),
             TableColumn(field='value', formatter=app_url_formatter,
                         title=title, sortable=False, width=Layout.SMALL),
         ]

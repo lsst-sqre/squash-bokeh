@@ -20,9 +20,9 @@ class BaseApp(APIHelper):
         self.message = str()
 
         self.empty = {'job_id': [], 'time': [], 'date_created': [],
-                      'value': [], 'ci_id': [], 'ci_url': [], 'count': [],
-                      'filter_name': [], 'color': [], 'package_names': [],
-                      'git_urls': []}
+                      'value': [], 'formatted_value': [], 'ci_id': [],
+                      'ci_url': [], 'count': [], 'filter_name': [],
+                      'color': [], 'package_names': [], 'git_urls': []}
 
         self.cds = ColumnDataSource(data=self.empty)
 
@@ -147,6 +147,13 @@ class BaseApp(APIHelper):
         color = []
         for filter_name in self.measurements['filter_name']:
             color.append(self.get_filter_color(filter_name))
+
+        # DM-14376
+        # for displaying the five most significant digits
+        formatted_value = ["{0:.5g}".format(value)
+                           for value in self.measurements['value']]
+
+        self.measurements['formatted_value'] = formatted_value
 
         self.measurements['color'] = color
 

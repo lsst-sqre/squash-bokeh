@@ -30,8 +30,6 @@ class Layout(BaseApp):
         self.make_footnote()
         self.make_table()
 
-        self.make_layout()
-
     def make_input_widgets(self):
         """Define the widgets to select dataset, verification package,
         metrics and period
@@ -40,6 +38,10 @@ class Layout(BaseApp):
         self.datasets_widget = Select(title="Dataset:",
                                       value=self.selected_dataset,
                                       options=self.datasets['datasets'])
+
+        self.filters_widget = Select(title="Filter:",
+                                     value=self.selected_filter,
+                                     options=self.filters)
 
         self.packages_widget = Select(title="Verification package:",
                                       value=self.selected_package,
@@ -101,15 +103,19 @@ class Layout(BaseApp):
 
         hover = HoverTool(tooltips=[("Time (UTC)", "@date_created"),
                                     ("CI ID", "@ci_id"),
-                                    ("Metric measurement", "@value"),
+                                    ("Metric measurement", "@formatted_value"),
                                     ("Filter", "@filter_name"),
                                     ("# of packages changed", "@count")])
 
         self.plot.add_tools(hover)
 
+        self.plot.line(x='time', y='value', color='gray',
+                       legend='filter_name', source=self.cds)
+
         self.plot.circle(x='time', y='value',
                          color='color', legend='filter_name',
-                         source=self.cds, fill_color='white', size=12)
+                         source=self.cds, fill_color='white',
+                         size=12)
 
         # Legend
         self.plot.background_fill_alpha = 0
@@ -119,36 +125,6 @@ class Layout(BaseApp):
 
         # Toolbar
         self.plot.toolbar.logo = None
-
-        # Code changes
-        self.plot.add_layout(LinearAxis(y_range_name="pkgs_changed",
-                                        axis_label="# of packages changed"),
-                             'right')
-
-        max_count = 0
-        if 'count' in self.cds.data:
-            max_count = max(self.cds.data['count'])
-
-        self.plot.extra_y_ranges = {'pkgs_changed':
-                                    Range1d(start=0, end=max_count)}
-
-        self.plot.line(x='time', y='count', y_range_name='pkgs_changed',
-                       source=self.cds, line_width=1, color='lightblue',
-                       legend="Code changes")
-
-        # This callback is used to reset the range of the extra y-axis
-        # to its original value when zoom or pan
-
-        args = {'range': self.plot.extra_y_ranges['pkgs_changed']}
-        code = """
-            range.start = 0;
-            range.end = parseInt({});
-            """.format(max_count)
-
-        callback = CustomJS(args=args, code=code)
-
-        self.plot.extra_y_ranges['pkgs_changed'].js_on_change('start',
-                                                              callback)
 
         self.status = Label(x=350, y=75, x_units='screen', y_units='screen',
                             text="", text_color="lightgray",
@@ -276,6 +252,7 @@ class Layout(BaseApp):
         """App layout
         """
         datasets = widgetbox(self.datasets_widget, width=Layout.TINY)
+        filters = widgetbox(self.filters_widget, width=Layout.TINY)
         packages = widgetbox(self.packages_widget, width=Layout.SMALL)
         metrics = widgetbox(self.metrics_widget, width=Layout.SMALL)
 
@@ -286,9 +263,9 @@ class Layout(BaseApp):
 
         footnote = widgetbox(self.footnote, width=Layout.LARGE)
 
-        l = column(header,
-                   row(datasets, packages, metrics),
-                   period, plot_title, self.plot,
-                   footnote, self.table)
+        layout = column(header,
+                        row(datasets, filters, packages, metrics),
+                        period, plot_title, self.plot,
+                        footnote, self.table)
 
-        self.add_layout(l)
+        self.add_layout(layout)

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import requests
+import logging
 
 
 class APIHelper:
@@ -10,6 +11,8 @@ class APIHelper:
                                     'http://localhost:5000')
 
     def __init__(self):
+        self.logger = logging.getLogger()
+
         self.session = requests.Session()
         self.session.mount('https://',
                            requests.adapters.HTTPAdapter(max_retries=5))

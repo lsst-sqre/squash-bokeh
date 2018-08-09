@@ -9,6 +9,7 @@ class Monitor(Interactions):
     def __init__(self, title):
         super().__init__()
         self.set_title(title)
+        self.make_layout()
 
 
 if SQUASH_PY_CALL_GRAPH:

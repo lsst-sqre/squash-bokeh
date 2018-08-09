@@ -1,9 +1,10 @@
 import os
 import sys
-from datetime import datetime
+import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource
+
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
@@ -30,9 +31,7 @@ class BaseApp(APIHelper):
 
         self.validate_inputs()
 
-        self.load_data(self.selected_dataset,
-                       self.selected_metric,
-                       self.selected_period)
+        self.load_data()
 
     def parse_args(self):
 
@@ -44,6 +43,15 @@ class BaseApp(APIHelper):
 
         return parsed_args
 
+    def get_dataset_filters(self, dataset):
+
+        dataset_filters = {'validation_data_cfht': ['r'],
+                           'validation_data_hsc': ['HSC-R', 'HSC-I', 'HSC-Y'],
+                           'HSC RC2': ['HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z',
+                                       'HSC-Y', 'NB0921']}
+
+        return dataset_filters[dataset]
+
     def validate_inputs(self):
 
         # Datasets
@@ -54,6 +62,14 @@ class BaseApp(APIHelper):
             self.selected_dataset = self.args['ci_dataset']
         else:
             self.selected_dataset = self.datasets['default']
+
+        # Filters
+        # TODO filter should be a dataset property see DM-15317
+        # self.filters = self.get_filters()
+
+        self.filters = self.get_dataset_filters(self.selected_dataset)
+
+        self.selected_filter = self.filters[0]
 
         # Verification Packages
         self.packages = self.get_packages(default='validate_drp')
@@ -84,24 +100,19 @@ class BaseApp(APIHelper):
         else:
             self.selected_period = self.periods['default']
 
-    def load_data(self, selected_dataset, selected_metric,
-                  selected_period):
+    def load_data(self):
 
-        self.load_measurements(selected_dataset,
-                               selected_metric,
-                               selected_period)
-
-        self.load_code_changes(selected_dataset,
-                               selected_period)
-
+        self.load_measurements()
+        self.load_code_changes()
         self.update_datasource()
 
-    def load_code_changes(self, ci_dataset, period):
+    def load_code_changes(self):
 
         self.code_changes = self.get_api_data_as_pandas_df(
             endpoint='code_changes',
-            params={'ci_dataset': ci_dataset,
-                    'period': period})
+            params={'ci_dataset': self.selected_dataset,
+                    'filter_name': self.selected_filter,
+                    'period': self.selected_period})
 
     @staticmethod
     def get_filter_color(filter_name):
@@ -130,32 +141,36 @@ class BaseApp(APIHelper):
 
         return color
 
-    def load_measurements(self, ci_dataset, metric, period):
+    def load_measurements(self):
 
-        self.measurements = self.get_api_data_as_pandas_df(
+        df = self.get_api_data_as_pandas_df(
             endpoint='monitor',
-            params={'ci_dataset': ci_dataset,
-                    'metric': metric,
-                    'period': period})
+            params={'ci_dataset': self.selected_dataset,
+                    'filter_name': self.selected_filter,
+                    'metric': self.selected_metric,
+                    'period': self.selected_period})
 
         # Add datetime objects from the string representation
-        time = [datetime.strptime(x, "%Y-%m-%dT%H:%M:%SZ")
-                for x in self.measurements['date_created']]
+        df['time'] = pd.to_datetime(df['date_created'],
+                                    format="%Y-%m-%dT%H:%M:%SZ",
+                                    utc=True)
 
-        self.measurements['time'] = time
+        df['date_created'] = [x.replace('T', ' ').replace('Z', ' ')
+                              for x in df['date_created']]
 
-        color = []
-        for filter_name in self.measurements['filter_name']:
-            color.append(self.get_filter_color(filter_name))
+        # Assign a color for the selected_filter
+        color = self.get_filter_color(self.selected_filter)
+
+        df['color'] = [color] * len(df['time'])
 
         # DM-14376
         # for displaying the five most significant digits
         formatted_value = ["{0:.5g}".format(value)
-                           for value in self.measurements['value']]
+                           for value in df['value']]
 
-        self.measurements['formatted_value'] = formatted_value
+        df['formatted_value'] = formatted_value
 
-        self.measurements['color'] = color
+        self.measurements = df
 
     @staticmethod
     def format_package_data(packages):
@@ -177,26 +192,28 @@ class BaseApp(APIHelper):
         return package_names, git_urls
 
     def update_datasource(self):
-        """ Create a bokeh column data source for the
-        selected dataset and period
+        """ Merge measurements and code_changes, and
+        create a bokeh column data source
         """
+
         if self.measurements.size > 0:
 
-            # Add packages and count columns
-            df = self.measurements.merge(self.code_changes,
-                                         on='ci_id', how='left')
+            if self.code_changes.size > 0:
+                # Add packages and count columns
+                df = self.measurements.merge(self.code_changes,
+                                             on='ci_id', how='inner')
 
-            # Replace NaN with zeros in count
-            df['count'] = df['count'].fillna(0)
+                # Replace NaN with zeros in count
+                df['count'] = df['count'].fillna(0)
 
-            # Add list of package names and git urls
-            package_names, git_urls = self.format_package_data(df['packages'])
+                # Add list of package names and git urls
+                package_data = self.format_package_data(df['packages'])
 
-            df['package_names'] = package_names
+                df['package_names'], df['git_urls'] = package_data
 
-            df['git_urls'] = git_urls
-
-            self.cds.data = df.to_dict(orient='list')
+                self.cds.data = df.to_dict(orient='list')
+            else:
+                self.cds.data = self.measurements.to_dict(orient='list')
         else:
             self.cds.data = self.empty
 

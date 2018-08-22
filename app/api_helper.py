@@ -16,6 +16,7 @@ class APIHelper:
         self.session = requests.Session()
         self.session.mount('https://',
                            requests.adapters.HTTPAdapter(max_retries=5))
+        self.squash_api_url = APIHelper.SQUASH_API_URL
 
     def sublist(self, list1, list2):
         return set(list1) <= set(list2)
@@ -31,7 +32,7 @@ class APIHelper:
         """
         endpoint_urls = None
         try:
-            r = self.session.get(APIHelper.SQUASH_API_URL)
+            r = self.session.get(self.squash_api_url)
             endpoint_urls = r.json()
         except requests.exceptions.RequestException as e:
             print(e)
@@ -230,37 +231,47 @@ class APIHelper:
 
         return {metric['name']: metric for metric in data['metrics']}
 
-    def get_specs(self, metric, default=None):
+    def get_specs(self, dataset_name, filter_name, metric):
         """Get the list of specification names for a given
         metric.
 
         Parameters
         ----------
+        dataset_name: str
+            name of the dataset, e.g. `validation_data_hsc`
+        filter_name: str
+            name of filter, e.g. `r`
         metric: str
             a full qualified metric name, e.g. `validate_drp.AM1`
-        default: str
-            a full qualified name for the metric specification to
-            be used as default, e.g. `validate_drp.AM1.minimum_gri`
-
         Return
         ------
         specs: list
             list of specification names
-        default: str
-            the default specification, if the the default specification
-            provided as parameter is valid then use it instead of the
-            default specification obtained from the API
+        thresholds: list
+            list of threshold values
         """
-        data = self.get_api_data('specs', params={'metric': metric})['specs']
+        data = self.get_api_data('specs',
+                                 params={'metric': metric,
+                                         'dataset_name': dataset_name,
+                                         'filter_name': filter_name})
 
-        specs = []
-        default_spec = None
+        specs = data['specs']
 
-        if data:
-            specs = [s['name'] for s in data]
-            default_spec = specs[0]
+        if not specs:
+            # relax constraint on filter_name
+            data = self.get_api_data('specs',
+                                     params={'metric': metric,
+                                             'dataset_name': dataset_name})
+            specs = data['specs']
 
-            if default and default in specs:
-                default_spec = default
+        names = []
+        thresholds = []
 
-        return {'specs': specs, 'default': default_spec}
+        def pretty(s):
+            return s.replace(metric + ".", "").replace("_", " ").lower()
+
+        if specs:
+            names = [pretty(s['name']) for s in specs]
+            thresholds = [t['threshold']['value'] for t in specs]
+
+        return {'names': names, 'thresholds': thresholds}

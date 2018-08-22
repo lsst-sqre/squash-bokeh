@@ -3,6 +3,8 @@ from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import Figure
 from bokeh.models import HoverTool, Range1d, CustomJS, \
     LinearAxis, Label
+from bokeh.models import Span
+
 
 from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter
 
@@ -150,8 +152,43 @@ class Layout(BaseApp):
 
         self.status.text = ""
 
+        self.update_annotations()
+
         if self.cds.to_df().size < 2:
             self.status.text = "No data to display"
+
+    def update_annotations(self):
+
+        # Remove previous annotations
+        for r in self.plot.renderers:
+            if r.name == 'annotation':
+                r.visible = False
+
+        specs = self.get_specs(self.selected_dataset,
+                               self.selected_filter,
+                               self.selected_metric)
+        names = specs['names']
+        thresholds = specs['thresholds']
+
+        for name, threshold in zip(names, thresholds):
+            label = Label(name='annotation',
+                          x=50,
+                          y=threshold,
+                          x_units='screen',
+                          y_units='data',
+                          text=name,
+                          text_font_size='8pt',
+                          text_color='red')
+
+            span = Span(name='annotation',
+                        location=threshold,
+                        dimension='width',
+                        line_color='red',
+                        line_dash='dashed',
+                        line_width=0.5)
+
+            self.plot.add_layout(label)
+            self.plot.add_layout(span)
 
     def make_footnote(self):
         """Footnote area to include reference info

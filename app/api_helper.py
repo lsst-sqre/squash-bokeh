@@ -231,18 +231,18 @@ class APIHelper:
 
         return {metric['name']: metric for metric in data['metrics']}
 
-    def get_specs(self, dataset_name, filter_name, metric):
+    def get_specs(self, metric, dataset_name=None, filter_name=None):
         """Get the list of specification names for a given
         metric.
 
         Parameters
         ----------
+        metric: str
+            a full qualified metric name, e.g. `validate_drp.AM1`
         dataset_name: str
             name of the dataset, e.g. `validation_data_hsc`
         filter_name: str
             name of filter, e.g. `r`
-        metric: str
-            a full qualified metric name, e.g. `validate_drp.AM1`
         Return
         ------
         specs: list

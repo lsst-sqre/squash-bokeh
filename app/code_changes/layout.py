@@ -1,8 +1,7 @@
 from bokeh.models.widgets import Select, Div, RadioButtonGroup
 from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import Figure
-from bokeh.models import HoverTool, Range1d, CustomJS, \
-    LinearAxis, Label
+from bokeh.models import HoverTool, Label
 from bokeh.models import Span
 
 

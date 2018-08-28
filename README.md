@@ -2,6 +2,7 @@
 
 The SQuaSH Bokeh serves the squash-bokeh apps, we use the Bokeh plotting library for rich interactive visualizations. You can learn more about SQuaSH at [SQR-009](https://sqr-009.lsst.io).
 
+[![Build Status](https://travis-ci.org/lsst-sqre/squash-bokeh.svg?branch=master)](https://travis-ci.org/lsst-sqre/squash-bokeh)
 
 ## Requirements 
 
@@ -19,7 +20,7 @@ NOTE: the bokeh apps to be deployed can be configured by setting the following v
 ```
 export SQUASH_BOKEH_APPS="code_changes AMx"
 ```
-the default is to deploy all the bokeh apps in the `/app` folder. 
+the default is to deploy all the bokeh apps in the `/app` folder.
 
 Also, it must be consistent with the bokeh apps configured in the [squash](https://github.com/lsst-sqre/squash) deployment.
 
@@ -54,7 +55,7 @@ kubectl rollout history deployment squash-bokeh
 ```
 
 Modify the `squash-bokeh` image and then apply the new configuration for the kubernetes deployment:
-  
+
 ```
 TAG=latest make build push update
 ```
@@ -109,12 +110,11 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Run the `squash-bokeh` 
+2. Run the `squash-bokeh`
 
 ```
 export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment
 bokeh serve --log-level debug --allow-websocket-origin=localhost:5006 app/<name of the bokeh app you want to run>
 ```
 
-The `squash-bokeh` will run at `http://localhost:5006`. 
-
+The `squash-bokeh` will run at `http://localhost:5006`.

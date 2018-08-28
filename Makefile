@@ -1,16 +1,22 @@
 all:
-PREFIX = lsstsqre/squash-bokeh
+BOKEH_IMAGE = lsstsqre/squash-bokeh
 NGINX_CONFIG = kubernetes/nginx/nginx.conf
 REPLACE = ./kubernetes/replace.sh
 DEPLOYMENT_TEMPLATE = kubernetes/deployment-template.yaml
 DEPLOYMENT_CONFIG = kubernetes/deployment.yaml
 SERVICE_CONFIG = kubernetes/service.yaml
 
+travis-build:
+	docker build -t $(BOKEH_IMAGE):build .
+
+travis-docker-deploy:
+	./bin/travis-docker-deploy.sh $(BOKEH_IMAGE) build
+
 build: check-tag check-bokeh-apps
-	docker build -t $(PREFIX):${TAG} .
+	docker build -t $(BOKEH_IMAGE):${TAG} .
 
 push: check-tag
-	docker push $(PREFIX):${TAG}
+	docker push $(BOKEH_IMAGE):${TAG}
 
 configmap:
 	@echo "Creating config map for nginx configuration..."
@@ -31,7 +37,6 @@ deployment: check-tag configmap
 	kubectl delete --ignore-not-found=true deployment squash-bokeh
 	kubectl create -f $(DEPLOYMENT_CONFIG)
 
-
 update: check-tag
 	@echo "Updating squash-bokeh deployment..."
 	@$(REPLACE) $(DEPLOYMENT_TEMPLATE) $(DEPLOYMENT_CONFIG)
@@ -44,5 +49,8 @@ clean:
 check-tag:
 	@if test -z ${TAG}; then echo "Error: TAG is undefined."; exit 1; fi
 
-check-bokeh-apps:	
+check-bokeh-apps:
 	@if test -z "${SQUASH_BOKEH_APPS}"; then echo "Warning: SQUASH_BOKEH_APPS is undefined, using default in replace.sh"; fi
+
+test:
+	flake8 app tests

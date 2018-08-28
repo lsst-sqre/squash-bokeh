@@ -221,9 +221,9 @@ class Layout(BaseApp):
 
         footnote = widgetbox(self.footnote, width=Layout.LARGE)
 
-        l = column(header,
-                   row(packages, metrics),
-                   period, plot_title, self.plot,
-                   footnote, self.table)
+        layout = column(header,
+                        row(packages, metrics),
+                        period, plot_title, self.plot,
+                        footnote, self.table)
 
-        self.add_layout(l)
+        self.add_layout(layout)

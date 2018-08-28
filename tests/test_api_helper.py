@@ -1,6 +1,7 @@
 import unittest
 from app.api_helper import APIHelper
 
+
 class TestAPIHelper(unittest.TestCase):
     """Test the API helper functions used in squash bokeh, the tests
     below make sure the functions run and the API returns
@@ -14,7 +15,7 @@ class TestAPIHelper(unittest.TestCase):
 
         self.APIHelper = APIHelper()
         self.default_msg = "It looks like you don't have enough data in " \
-                   "the SQuaSH API."
+                           "the SQuaSH API."
 
     def test_get_datasets(self):
 
@@ -26,7 +27,6 @@ class TestAPIHelper(unittest.TestCase):
 
         self.assertIsNot(default_dataset, None, msg=self.default_msg)
         self.assertIn(default_dataset, datasets['datasets'])
-
 
     def test_get_packages(self):
 
@@ -43,5 +43,5 @@ class TestAPIHelper(unittest.TestCase):
 
         packages = self.APIHelper.get_packages()
         default_package = packages['default']
-
         metrics = self.APIHelper.get_metrics(package=default_package)
+        self.assertIn(metrics[0], metrics)

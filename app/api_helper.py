@@ -59,6 +59,11 @@ class APIHelper:
             from the API.
         """
         endpoint_urls = self.get_api_endpoint_urls()
+        print('endpoint urls')
+        for pp in endpoint_urls:
+            print(pp)
+            result = self.session.get(endpoint_urls[pp])
+            print(result)
 
         url = endpoint_urls[endpoint]
 
@@ -69,6 +74,8 @@ class APIHelper:
         if endpoint_urls:
             try:
                 r = self.session.get(url, params=params)
+                print('r is')
+                print(r)
                 data = r.json()
             except requests.exceptions.RequestException as e:
                 print(e)

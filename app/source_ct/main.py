@@ -4,7 +4,7 @@ from bokeh.models.markers import Circle
 from bokeh.models import BasicTicker, NumeralTickFormatter
 from bokeh.models import LinearAxis
 
-from bokeh layouts import column
+from bokeh.layouts import column
 
 from base import BaseApp
 

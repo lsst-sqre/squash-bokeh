@@ -201,7 +201,7 @@ class Layout(BaseApp):
         template = None
         if self.selected_metric == "dummy_ct_metric.SrcCt":
             # Drill down app, it uses the job_id to access the data blobs
-            app_url = "/dash/sysver?job_id=<%= job_id %>" \
+            app_url = "/dash/source_ct?job_id=<%= job_id %>" \
                       "&metric={}".format(self.selected_metric)
 
             template = '<a href="{}" ><%= formatted_value %>' \

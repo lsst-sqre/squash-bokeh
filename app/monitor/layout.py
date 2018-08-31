@@ -198,6 +198,20 @@ class Layout(BaseApp):
             if display_name:
                 title = "{}".format(display_name)
 
+        template = None
+        if self.selected_metric == "dummy_ct_metric.SrcCt":
+            # Drill down app, it uses the job_id to access the data blobs
+            app_url = "/dash/sysver?job_id=<%= job_id %>" \
+                      "&metric={}".format(self.selected_metric)
+
+            template = '<a href="{}" ><%= formatted_value %>' \
+                       '</a>'.format(app_url)
+
+        else:
+            template = "<%= formatted_value %>"
+
+        app_url_formatter = HTMLTemplateFormatter(template=template)
+
         columns = [
             TableColumn(field="date_created", title="Time (UTC)",
                         sortable=True, default_sort='descending',

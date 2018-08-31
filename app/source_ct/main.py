@@ -1,3 +1,11 @@
+import os
+import sys
+# This is needed to import the api_helper module
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+sys.path.append(os.path.join(BASE_DIR, 'monitor'))
+
 from bokeh.models import ColumnDataSource
 from bokeh.models import Plot
 from bokeh.models.markers import Circle
@@ -11,7 +19,8 @@ from base import BaseApp
 class SourceCtMetric(BaseApp):
 
     def __init__(self):
-        self.data = get_api_data(endpoint='blob')
+        super().__init__()
+        self.data = self.get_api_data(endpoint='blob')
         data = ColumnDataSource({'ra':data['ra_rad'],
                                  'dec':data['dec_rad']})
 

@@ -3,7 +3,7 @@ from bokeh.layouts import widgetbox, row, column
 from bokeh.plotting import Figure
 from bokeh.models import HoverTool, Label
 
-from bokeh.models.widgets import DataTable, TableColumn
+from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter
 from base import BaseApp
 
 
@@ -199,7 +199,7 @@ class Layout(BaseApp):
                 title = "{}".format(display_name)
 
         template = None
-        if self.selected_metric == "dummy_ct_metric.SrcCt":
+        if self.selected_metric == "dummy_ct_metric.SrcCt2":
             # Drill down app, it uses the job_id to access the data blobs
             app_url = "/dash/source_ct?job_id=<%= job_id %>" \
                       "&metric={}".format(self.selected_metric)

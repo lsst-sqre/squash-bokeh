@@ -110,11 +110,21 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Run the `squash-bokeh`
+2. Create a new bokeh app
 
 ```
-export SQUASH_API_URL=<squash-api url>  # e.g the one from squash-api deployment
-bokeh serve --log-level debug --allow-websocket-origin=localhost:5006 app/<name of the bokeh app you want to run>
+mkdir app/<new app>
 ```
 
-The `squash-bokeh` will run at `http://localhost:5006`.
+you can follow the structrure used in one of the existing apps, e.g. `app/monitor`.
+
+3. Run the `squash-bokeh` app
+
+```
+export SQUASH_API_URL=<squash-api url>  # you can use one of the deployed SQuaSH APIs e.g. export SQUASH_API_URL=http://squash-restful-api-sandbox.lsst.codes/
+bokeh serve --log-level debug <path to app 1> [<path to app 2>] # e.g.  bokeh serve --log-level debug app/monitor
+```
+
+when you point to the app directory, the file that is called by the bokeh server is always the `main.py`.
+
+The app(s) will run at `http://localhost:5006`.

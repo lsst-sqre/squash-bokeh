@@ -20,6 +20,10 @@ class SourceCtMetric(BaseApp):
 
     def __init__(self):
         super().__init__()
+        self.selected_metric = BaseApp.METRICS[0]
+        print('\n')
+        print('selected_metric: ',self.selected_metric)
+        print('\n')
         data = self.get_api_data(endpoint='blob', item=self.args['job_id'])
         print('\ndata stats')
         for kk in data.keys():

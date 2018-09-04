@@ -21,6 +21,9 @@ class SourceCtMetric(BaseApp):
     def __init__(self):
         super().__init__()
         data = self.get_api_data(endpoint='blob', item=self.args['job_id'])
+        print('\ndata stats')
+        for kk in data.keys():
+            print(kk)
         data = ColumnDataSource({'ra':data['ra_rad'],
                                  'dec':data['dec_rad']})
 

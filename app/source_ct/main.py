@@ -10,7 +10,7 @@ from bokeh.models import ColumnDataSource
 from bokeh.models import Plot
 from bokeh.models.markers import Circle
 from bokeh.models import BasicTicker, NumeralTickFormatter
-from bokeh.models import LinearAxis
+from bokeh.models import LinearAxis, DataRange1d
 
 from bokeh.layouts import column
 
@@ -35,8 +35,8 @@ class SourceCtMetric(BaseApp):
 
         plot = Plot()
         sources = Circle(x='ra', y='dec', line_color=None, size=5)
-        plot.add_glyp(data, sources)
-        ra_axis = LinearAxis(formatter=NumeralTickFormatters(format="0.00"),
+        plot.add_glyph(data, sources)
+        ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
                              minor_tick_line_width=2,
                              major_tick_line_width=4,
@@ -44,7 +44,7 @@ class SourceCtMetric(BaseApp):
                              minor_tick_out=5,
                              axis_label='RA (radians)')
 
-        dec_axis = LinearAxis(formatter=NumeralTickFormatters(format="0.00"),
+        dec_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
                              minor_tick_line_width=2,
                              major_tick_line_width=4,
@@ -54,6 +54,8 @@ class SourceCtMetric(BaseApp):
 
         plot.add_layout(ra_axis, 'below')
         plot.add_layout(dec_axis, 'left')
+        plot.x_range = DataRange1d()
+        plot.y_range = DataRange1d()
 
         col = column(plot)
         self.add_layout(col)

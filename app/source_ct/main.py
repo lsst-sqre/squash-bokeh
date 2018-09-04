@@ -20,7 +20,7 @@ class SourceCtMetric(BaseApp):
 
     def __init__(self):
         super().__init__()
-        self.data = self.get_api_data(endpoint='blob')
+        data = self.get_api_data(endpoint='blob', item=self.args['job_id'])
         data = ColumnDataSource({'ra':data['ra_rad'],
                                  'dec':data['dec_rad']})
 

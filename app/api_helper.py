@@ -69,6 +69,9 @@ class APIHelper:
         if endpoint_urls:
             try:
                 r = self.session.get(url, params=params)
+                print('\nurl is: ',url)
+                print('\nr is: ',r)
+                print('\n')
                 data = r.json()
             except requests.exceptions.RequestException as e:
                 print(e)

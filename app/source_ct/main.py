@@ -20,16 +20,18 @@ class SourceCtMetric(BaseApp):
 
     def __init__(self):
         super().__init__()
-        self.selected_metric = BaseApp.METRICS[0]
+        self.selected_metric = 'dummy_ct_metric.SrcCt2'
         print('\n')
         print('selected_metric: ',self.selected_metric)
         print('\n')
-        data = self.get_api_data(endpoint='blob', item=self.args['job_id'])
+        data = self.get_api_data(endpoint='blob', item=56,
+                                 params={'name': self.selected_metric,
+                                         'metric': self.selected_metric})
         print('\ndata stats')
         for kk in data.keys():
             print(kk)
-        data = ColumnDataSource({'ra':data['ra_rad'],
-                                 'dec':data['dec_rad']})
+        data = ColumnDataSource({'ra':data['ra_rad']['value'],
+                                 'dec':data['dec_rad']['value']})
 
         plot = Plot()
         sources = Circle(x='ra', y='dec', line_color=None, size=5)

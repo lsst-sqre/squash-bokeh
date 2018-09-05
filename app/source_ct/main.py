@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(
 sys.path.append(os.path.join(BASE_DIR, 'monitor'))
 
 from bokeh.models import ColumnDataSource, LinearColorMapper
-from bokeh.plotting import figure
+from bokeh.models import Plot
 from bokeh.models.markers import Circle
 from bokeh.models import ColorBar
 from bokeh.models import BasicTicker, NumeralTickFormatter
@@ -47,11 +47,13 @@ class SourceCtMetric(BaseApp):
                                          high=max(mag_arr))
 
 
-        plot = figure()
-        plot.circle(x='ra', y='dec', source=column_data, size=5,
-                    color={'field':'mag', 'transform':color_mapper})
+        plot = Plot()
+        dots = Circle(x='ra', y='dec', size=5,
+                      line_color=None,
+                      fill_color={'field':'mag', 'transform':color_mapper})
 
         color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
+        plot.add_glyph(column_data, dots)
         plot.add_layout(color_bar, 'right')
 
         #plot.legend.location = "top_right"

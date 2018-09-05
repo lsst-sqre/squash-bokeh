@@ -59,6 +59,10 @@ class SourceCtMetric(BaseApp):
         flux_plot.add_glyph(column_data, flux_dots)
         flux_plot.add_layout(color_bar, 'right')
 
+        flux_plot.x_range = DataRange1d()
+        flux_plot.y_range = DataRange1d()
+
+
         color_mapper = LinearColorMapper(palette='Magma256',
                                          low=min(snr_arr),
                                          high=max(snr_arr))
@@ -66,6 +70,8 @@ class SourceCtMetric(BaseApp):
 
         title = Title(text='SNR')
         snr_plot = Plot(title=title)
+        snr_plot.x_range = flux_plot.x_range
+        snr_plot.y_range = flux_plot.y_range
 
         snr_dots = Circle(x='ra', y='dec', size=5,
                       line_color=None,
@@ -93,8 +99,6 @@ class SourceCtMetric(BaseApp):
 
         flux_plot.add_layout(ra_axis, 'below')
         flux_plot.add_layout(dec_axis, 'left')
-        flux_plot.x_range = DataRange1d()
-        flux_plot.y_range = DataRange1d()
 
         flux_plot.add_tools(bokeh_tools.BoxZoomTool())
         flux_plot.add_tools(bokeh_tools.ResetTool())
@@ -120,8 +124,6 @@ class SourceCtMetric(BaseApp):
 
         snr_plot.add_layout(ra_axis, 'below')
         snr_plot.add_layout(dec_axis, 'left')
-        snr_plot.x_range = DataRange1d()
-        snr_plot.y_range = DataRange1d()
 
         snr_plot.add_tools(bokeh_tools.BoxZoomTool())
         snr_plot.add_tools(bokeh_tools.ResetTool())

@@ -13,6 +13,7 @@ from bokeh.models.markers import Circle
 from bokeh.models import ColorBar
 from bokeh.models import BasicTicker, NumeralTickFormatter
 from bokeh.models import LinearAxis, DataRange1d
+import bokeh.models.tools as bokeh_tools
 
 from bokeh.layouts import column
 
@@ -78,6 +79,10 @@ class SourceCtMetric(BaseApp):
         plot.add_layout(dec_axis, 'left')
         plot.x_range = DataRange1d()
         plot.y_range = DataRange1d()
+
+        plot.add_tools(bokeh_tools.BoxZoomTool())
+        plot.add_tools(bokeh_tools.ResetTool())
+        plot.add_tools(bokeh_tools.LassoSelectTool())
 
         col = column(plot)
         self.add_layout(col)

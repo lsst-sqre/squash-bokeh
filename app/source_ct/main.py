@@ -106,7 +106,11 @@ class SourceCtMetric(BaseApp):
         flux_plot.add_tools(bokeh_tools.WheelZoomTool())
         flux_plot.add_tools(bokeh_tools.PanTool())
 
+        hover = bokeh_tools.HoverTool()
+        hover.tooltips= [('RightAscension', '@ra'),('Declination', '@dec'),
+                         ('magnitude', '@mag'), ('Signal_to_noise', '@snr')]
 
+        flux_plot.add_tools(hover)
         ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
                              minor_tick_line_width=2,

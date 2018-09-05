@@ -48,16 +48,14 @@ class SourceCtMetric(BaseApp):
                                          high=max(mag_arr))
 
 
-        plot = Plot()
-        dots = Circle(x='ra', y='dec', size=5,
+        flux_plot = Plot()
+        flux_dots = Circle(x='ra', y='dec', size=5,
                       line_color=None,
                       fill_color={'field':'mag', 'transform':color_mapper})
 
         color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
-        plot.add_glyph(column_data, dots)
-        plot.add_layout(color_bar, 'right')
-
-        #plot.legend.location = "top_right"
+        flux_plot.add_glyph(column_data, flux_dots)
+        flux_plot.add_layout(color_bar, 'right')
 
         ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
@@ -75,16 +73,16 @@ class SourceCtMetric(BaseApp):
                              minor_tick_out=5,
                              axis_label='Dec (radians)')
 
-        plot.add_layout(ra_axis, 'below')
-        plot.add_layout(dec_axis, 'left')
-        plot.x_range = DataRange1d()
-        plot.y_range = DataRange1d()
+        flux_plot.add_layout(ra_axis, 'below')
+        flux_plot.add_layout(dec_axis, 'left')
+        flux_plot.x_range = DataRange1d()
+        flux_plot.y_range = DataRange1d()
 
-        plot.add_tools(bokeh_tools.BoxZoomTool())
-        plot.add_tools(bokeh_tools.ResetTool())
-        plot.add_tools(bokeh_tools.LassoSelectTool())
+        flux_plot.add_tools(bokeh_tools.BoxZoomTool())
+        flux_plot.add_tools(bokeh_tools.ResetTool())
+        flux_plot.add_tools(bokeh_tools.LassoSelectTool())
 
-        col = column(plot)
+        col = column(flux_plot)
         self.add_layout(col)
 
 

@@ -10,6 +10,7 @@ sys.path.append(os.path.join(BASE_DIR, 'monitor'))
 from bokeh.models import ColumnDataSource, LinearColorMapper
 from bokeh.plotting import figure
 from bokeh.models.markers import Circle
+from bokeh.models import ColorBar
 from bokeh.models import BasicTicker, NumeralTickFormatter
 from bokeh.models import LinearAxis, DataRange1d
 
@@ -49,6 +50,9 @@ class SourceCtMetric(BaseApp):
         plot = figure()
         plot.circle(x='ra', y='dec', source=column_data, size=5,
                     color={'field':'mag', 'transform':color_mapper})
+
+        color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
+        plot.add_layout(color_bar, 'right')
 
         #plot.legend.location = "top_right"
 

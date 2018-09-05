@@ -7,6 +7,7 @@ BASE_DIR = os.path.dirname(
 )
 sys.path.append(os.path.join(BASE_DIR, 'monitor'))
 
+from bokeh.models.annotations import Title
 from bokeh.models import ColumnDataSource, LinearColorMapper
 from bokeh.models import Plot
 from bokeh.models.markers import Circle
@@ -48,7 +49,8 @@ class SourceCtMetric(BaseApp):
                                          high=max(mag_arr))
 
 
-        flux_plot = Plot()
+        title = Title(text='log(flux)')
+        flux_plot = Plot(title=title)
         flux_dots = Circle(x='ra', y='dec', size=5,
                       line_color=None,
                       fill_color={'field':'mag', 'transform':color_mapper})

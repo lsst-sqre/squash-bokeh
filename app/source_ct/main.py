@@ -20,11 +20,12 @@ class SourceCtMetric(BaseApp):
 
     def __init__(self):
         super().__init__()
-        self.selected_metric = 'dummy_ct_metric.SrcCt2'
+        args = self.parse_args()
+        self.selected_metric = args['metric']
         print('\n')
         print('selected_metric: ',self.selected_metric)
         print('\n')
-        data = self.get_api_data(endpoint='blob', item=56,
+        data = self.get_api_data(endpoint='blob', item=args['job_id'],
                                  params={'name': self.selected_metric,
                                          'metric': self.selected_metric})
         print('\ndata stats')

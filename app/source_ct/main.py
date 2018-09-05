@@ -14,6 +14,7 @@ from bokeh.models.markers import Circle
 from bokeh.models import ColorBar
 from bokeh.models import BasicTicker, NumeralTickFormatter
 from bokeh.models import LinearAxis, DataRange1d
+from bokeh.models import CustomJS
 import bokeh.models.tools as bokeh_tools
 
 from bokeh.layouts import row
@@ -37,7 +38,7 @@ class SourceCtMetric(BaseApp):
             print(kk)
         mag_arr = -2.5*np.log10(data['flux']['value'])
         snr_arr = np.array(data['flux']['value'])/np.array(data['flux_sigma']['value'])
-        column_data = ColumnDataSource({'ra':data['ra_rad']['value'],
+        orig_data = ColumnDataSource({'ra':data['ra_rad']['value'],
                                         'dec':data['dec_rad']['value'],
                                         'mag':mag_arr,
                                         'snr':snr_arr})
@@ -56,7 +57,7 @@ class SourceCtMetric(BaseApp):
                       fill_color={'field':'mag', 'transform':color_mapper})
 
         color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
-        flux_plot.add_glyph(column_data, flux_dots)
+        flux_plot.add_glyph(orig_data, flux_dots)
         flux_plot.add_layout(color_bar, 'right')
 
         flux_plot.x_range = DataRange1d()
@@ -78,7 +79,7 @@ class SourceCtMetric(BaseApp):
                       fill_color={'field':'snr', 'transform':color_mapper})
 
         color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
-        snr_plot.add_glyph(column_data, snr_dots)
+        snr_plot.add_glyph(orig_data, snr_dots)
         snr_plot.add_layout(color_bar, 'right')
 
         ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
@@ -137,14 +138,14 @@ class SourceCtMetric(BaseApp):
         snr_plot.add_tools(bokeh_tools.PanTool())
 
 
-        flux_v_snr_data = ColumnDataSource({'mag':[],'snr':[]})
+        s2 = ColumnDataSource({'mag':[],'snr':[]})
         flux_v_snr_plot = Plot()
         flux_v_snr_dots = Circle(x='mag', y='snr', size=5,
                       line_color=None,
                       fill_color='blue')
 
 
-        flux_v_snr_plot.add_glyph(flux_v_snr_data, flux_v_snr_dots)
+        flux_v_snr_plot.add_glyph(s2, flux_v_snr_dots)
 
         flux_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
@@ -152,7 +153,7 @@ class SourceCtMetric(BaseApp):
                              major_tick_line_width=4,
                              major_tick_out=30,
                              minor_tick_out=5,
-                             axis_label='flux')
+                             axis_label='mag')
 
         snr_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
@@ -166,6 +167,21 @@ class SourceCtMetric(BaseApp):
         flux_v_snr_plot.add_layout(snr_axis, 'left')
         flux_v_snr_plot.x_range = DataRange1d()
         flux_v_snr_plot.y_range = DataRange1d()
+
+        #http://bokeh.pydata.org/en/latest/docs/user_guide/interaction/
+        #callbacks.html#userguide-interaction-jscallbacks
+        orig_data.callback = CustomJS(args=dict(s2=s2), code="""
+            var inds = cb_obj.selected.indices;
+            var d1 = cb_obj.data;
+            var d2 = s2.data;
+            d2['mag'] = [];
+            d2['snr'] = [];
+            for (var i = 0; i < inds.length; i++){
+                d2['mag'].push(d1['mag'][inds[i]]);
+                d2['snr'].push(d1['snr'][inds[i]]);
+            }
+            s2.change.emit();
+            """)
 
         rr = row(flux_plot, snr_plot, flux_v_snr_plot)
         self.add_layout(rr)

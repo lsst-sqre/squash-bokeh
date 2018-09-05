@@ -137,7 +137,37 @@ class SourceCtMetric(BaseApp):
         snr_plot.add_tools(bokeh_tools.PanTool())
 
 
-        rr = row(flux_plot, snr_plot)
+        flux_v_snr_data = ColumnDataSource({'mag':[],'snr':[]})
+        flux_v_snr_plot = Plot()
+        flux_v_snr_dots = Circle(x='mag', y='snr', size=5,
+                      line_color=None,
+                      fill_color='blue')
+
+
+        flux_v_snr_plot.add_glyph(flux_v_snr_data, flux_v_snr_dots)
+
+        flux_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
+                             ticker=BasicTicker(desired_num_ticks=4),
+                             minor_tick_line_width=2,
+                             major_tick_line_width=4,
+                             major_tick_out=30,
+                             minor_tick_out=5,
+                             axis_label='flux')
+
+        snr_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
+                             ticker=BasicTicker(desired_num_ticks=4),
+                             minor_tick_line_width=2,
+                             major_tick_line_width=4,
+                             major_tick_out=30,
+                             minor_tick_out=5,
+                             axis_label='SNR')
+
+        flux_v_snr_plot.add_layout(flux_axis, 'below')
+        flux_v_snr_plot.add_layout(snr_axis, 'left')
+        flux_v_snr_plot.x_range = DataRange1d()
+        flux_v_snr_plot.y_range = DataRange1d()
+
+        rr = row(flux_plot, snr_plot, flux_v_snr_plot)
         self.add_layout(rr)
 
 

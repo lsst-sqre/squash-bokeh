@@ -36,11 +36,11 @@ class SourceCtMetric(BaseApp):
         for kk in data.keys():
             print(kk)
         mag_arr = -2.5*np.log10(data['flux']['value'])
+        snr_arr = np.array(data['flux']['value'])/np.array(data['flux_sigma']['value'])
         column_data = ColumnDataSource({'ra':data['ra_rad']['value'],
                                         'dec':data['dec_rad']['value'],
-                                        'flux':data['flux']['value'],
                                         'mag':mag_arr,
-                                        'flux_sigma':data['flux_sigma']['value']})
+                                        'snr':snr_arr})
 
 
 
@@ -58,6 +58,22 @@ class SourceCtMetric(BaseApp):
         color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
         flux_plot.add_glyph(column_data, flux_dots)
         flux_plot.add_layout(color_bar, 'right')
+
+        color_mapper = LinearColorMapper(palette='Magma256',
+                                         low=min(snr_arr),
+                                         high=max(snr_arr))
+
+
+        title = Title(text='SNR')
+        snr_plot = Plot(title=title)
+
+        snr_dots = Circle(x='ra', y='dec', size=5,
+                      line_color=None,
+                      fill_color={'field':'snr', 'transform':color_mapper})
+
+        color_bar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker())
+        snr_plot.add_glyph(column_data, snr_dots)
+        snr_plot.add_layout(color_bar, 'right')
 
         ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
                              ticker=BasicTicker(desired_num_ticks=4),
@@ -84,7 +100,36 @@ class SourceCtMetric(BaseApp):
         flux_plot.add_tools(bokeh_tools.ResetTool())
         flux_plot.add_tools(bokeh_tools.LassoSelectTool())
 
+
+        ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
+                             ticker=BasicTicker(desired_num_ticks=4),
+                             minor_tick_line_width=2,
+                             major_tick_line_width=4,
+                             major_tick_out=30,
+                             minor_tick_out=5,
+                             axis_label='RA (radians)')
+
+        dec_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
+                             ticker=BasicTicker(desired_num_ticks=4),
+                             minor_tick_line_width=2,
+                             major_tick_line_width=4,
+                             major_tick_out=30,
+                             minor_tick_out=5,
+                             axis_label='Dec (radians)')
+
+        snr_plot.add_layout(ra_axis, 'below')
+        snr_plot.add_layout(dec_axis, 'left')
+        snr_plot.x_range = DataRange1d()
+        snr_plot.y_range = DataRange1d()
+
+        snr_plot.add_tools(bokeh_tools.BoxZoomTool())
+        snr_plot.add_tools(bokeh_tools.ResetTool())
+        snr_plot.add_tools(bokeh_tools.LassoSelectTool())
+
+
         col = column(flux_plot)
+        self.add_layout(col)
+        col = column(snr_plot)
         self.add_layout(col)
 
 

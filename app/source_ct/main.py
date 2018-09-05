@@ -99,6 +99,7 @@ class SourceCtMetric(BaseApp):
         flux_plot.add_tools(bokeh_tools.BoxZoomTool())
         flux_plot.add_tools(bokeh_tools.ResetTool())
         flux_plot.add_tools(bokeh_tools.LassoSelectTool())
+        flux_plot.add_tools(bokeh_tools.WheelZoomTool())
 
 
         ra_axis = LinearAxis(formatter=NumeralTickFormatter(format="0.00"),
@@ -125,6 +126,7 @@ class SourceCtMetric(BaseApp):
         snr_plot.add_tools(bokeh_tools.BoxZoomTool())
         snr_plot.add_tools(bokeh_tools.ResetTool())
         snr_plot.add_tools(bokeh_tools.LassoSelectTool())
+        snr_plot.add_tools(bokeh_tools.WheelZoomTool())
 
 
         rr = row(flux_plot, snr_plot)

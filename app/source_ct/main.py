@@ -16,7 +16,7 @@ from bokeh.models import BasicTicker, NumeralTickFormatter
 from bokeh.models import LinearAxis, DataRange1d
 import bokeh.models.tools as bokeh_tools
 
-from bokeh.layouts import column
+from bokeh.layouts import row
 
 from base import BaseApp
 
@@ -127,10 +127,8 @@ class SourceCtMetric(BaseApp):
         snr_plot.add_tools(bokeh_tools.LassoSelectTool())
 
 
-        col = column(flux_plot)
-        self.add_layout(col)
-        col = column(snr_plot)
-        self.add_layout(col)
+        rr = row(flux_plot, snr_plot)
+        self.add_layout(rr)
 
 
 ###### ACTUALLY EXECUTE ########

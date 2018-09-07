@@ -25,4 +25,4 @@ class Interactions(Layout):
             return
 
         index.sort()
-        self.update_ave_temp(np.mean(np.array(self.cds.data['temperatures'])[index]))
+        self.update_ave_temp(np.mean(np.array(self.cds.data['z'])[index]))

@@ -24,7 +24,7 @@ class BaseApp(APIHelper):
         self.args = self.parse_args()
         self.message = str()
         self.validate_inputs()
-        self.cds = ColumnDataSource(data={'body_position': [], 'body_angle': [], 'temperatures': []})
+        self.cds = ColumnDataSource(data={'x': [], 'y': [], 'z': []})
         self.load_data(self.job_id, self.selected_metric)
 
     def load_data(self, job_id, metric):
@@ -36,28 +36,28 @@ class BaseApp(APIHelper):
                                             params={'metric': metric,
                                                     'name': metric})
 
-        temperatures = []
+        z_values = []
         self.z_axis = {}
         if 'cameraBody_temperature_grid' in df:
-            temperatures = df['cameraBody_temperature_grid']['value']
+            z_values = df['cameraBody_temperature_grid']['value']
             self.z_axis['label'] = df['cameraBody_temperature_grid']['label']
             self.z_axis['units'] = u.Unit(df['cameraBody_temperature_grid']['unit'])
 
-        positions = []
+        x_values = []
         self.x_axis = {}
         if 'cameraBody_positions' in df:
-            positions = df['cameraBody_positions']['value']
+            x_values = df['cameraBody_positions']['value']
             self.x_axis['label'] = df['cameraBody_positions']['label']
             self.x_axis['units'] = u.Unit(df['cameraBody_positions']['unit'])
 
-        angles = []
+        y_values = []
         self.y_axis = {}
         if 'cameraBody_angles' in df:
-            angles = df['cameraBody_angles']['value']
+            y_values = df['cameraBody_angles']['value']
             self.y_axis['label'] = df['cameraBody_angles']['label']
             self.y_axis['units'] = u.Unit(df['cameraBody_angles']['unit'])
 
-        self.cds.data = {'temperatures': temperatures, 'body_angle': angles, 'body_position': positions}
+        self.cds.data = {'z': z_values, 'y': y_values, 'x': x_values}
 
         # Get average temperature from job data
         self.metric_value = {}

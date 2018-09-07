@@ -49,21 +49,21 @@ class Layout(BaseApp):
                            active_scroll="wheel_zoom", x_axis_label=x_label,
                            y_axis_label=y_label)
 
-        temperatures = self.cds.data['temperatures']
-        color_temps = mpl.colors.Normalize()(temperatures)
+        z_values = self.cds.data['z']
+        color_temps = mpl.colors.Normalize()(z_values)
         hex_color = "#{:02x}{:02x}{:02x}"
         colors = [
             hex_color.format(int(r), int(g), int(b)) for r, g, b, _ in 255 * cm.plasma(color_temps)
         ]
         self.cds.data['colors'] = colors
 
-        self.pcircle = self.plot.circle('body_position', 'body_angle', size=5, fill_color='colors',
+        self.pcircle = self.plot.circle('x', 'y', size=5, fill_color='colors',
                                         line_color=None,
                                         source=self.cds.data)
 
         palette = "{}256".format(cm.plasma.name.capitalize())
-        color_mapper = LinearColorMapper(palette=palette, low=np.min(temperatures),
-                                         high=np.max(temperatures))
+        color_mapper = LinearColorMapper(palette=palette, low=np.min(z_values),
+                                         high=np.max(z_values))
         color_bar = ColorBar(color_mapper=color_mapper, location=(0, 0), title=z_label,
                              label_standoff=5, title_standoff=5,
                              orientation=Orientation.horizontal)

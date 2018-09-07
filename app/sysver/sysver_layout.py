@@ -9,6 +9,7 @@ import numpy as np
 
 from sysver_base import BaseApp
 
+
 class Layout(BaseApp):
 
     # Default sizes for widgets
@@ -41,11 +42,15 @@ class Layout(BaseApp):
         self.update_metric_display()
 
     def make_scatterplot(self):
-        x_label = "{} [{}]".format(self.x_axis['label'], self.x_axis['units'].to_string())
-        y_label = "{} [{}]".format(self.y_axis['label'], self.y_axis['units'].to_string())
-        z_label = "{} [{}]".format(self.z_axis['label'], self.z_axis['units'].to_string())
+        x_label = "{} [{}]".format(self.x_axis['label'],
+                                   self.x_axis['units'].to_string())
+        y_label = "{} [{}]".format(self.y_axis['label'],
+                                   self.y_axis['units'].to_string())
+        z_label = "{} [{}]".format(self.z_axis['label'],
+                                   self.z_axis['units'].to_string())
 
-        self.plot = figure(tools="box_select, pan, box_zoom, wheel_zoom, reset",
+        tool_list = "box_select, pan, box_zoom, wheel_zoom, reset"
+        self.plot = figure(tools=tool_list,
                            active_scroll="wheel_zoom", x_axis_label=x_label,
                            y_axis_label=y_label)
 
@@ -53,7 +58,8 @@ class Layout(BaseApp):
         color_temps = mpl.colors.Normalize()(z_values)
         hex_color = "#{:02x}{:02x}{:02x}"
         colors = [
-            hex_color.format(int(r), int(g), int(b)) for r, g, b, _ in 255 * cm.plasma(color_temps)
+            hex_color.format(int(r), int(g), int(b))
+            for r, g, b, _ in 255 * cm.plasma(color_temps)
         ]
         self.cds.data['colors'] = colors
 
@@ -62,9 +68,11 @@ class Layout(BaseApp):
                                         source=self.cds.data)
 
         palette = "{}256".format(cm.plasma.name.capitalize())
-        color_mapper = LinearColorMapper(palette=palette, low=np.min(z_values),
+        color_mapper = LinearColorMapper(palette=palette,
+                                         low=np.min(z_values),
                                          high=np.max(z_values))
-        color_bar = ColorBar(color_mapper=color_mapper, location=(0, 0), title=z_label,
+        color_bar = ColorBar(color_mapper=color_mapper, location=(0, 0),
+                             title=z_label,
                              label_standoff=5, title_standoff=5,
                              orientation=Orientation.horizontal)
 
@@ -75,11 +83,13 @@ class Layout(BaseApp):
             value = self.metric_value.get('value', '')
         value_units = self.metric_value.get('units', '')
 
-        text = "Average Temperature: {:.3f} {}".format(value, value_units.strip())
+        text = "Average Temperature: {:.3f} {}".format(value,
+                                                       value_units.strip())
         return text
 
     def update_metric_display(self, value=None):
         self.metric_widget.text = self.format_metric_text(value)
 
     def update_header(self):
-        self.header_widget.text = "<p style='color:red;'>{}</p>".format(self.message)
+        template = "<p style='color:red;'>{}</p>"
+        self.header_widget.text = template.format(self.message)

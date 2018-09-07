@@ -38,10 +38,11 @@ class BaseApp(APIHelper):
 
         z_values = []
         self.z_axis = {}
-        if 'cameraBody_temperature_grid' in df:
-            z_values = df['cameraBody_temperature_grid']['value']
-            self.z_axis['label'] = df['cameraBody_temperature_grid']['label']
-            self.z_axis['units'] = u.Unit(df['cameraBody_temperature_grid']['unit'])
+        z_label = 'cameraBody_temperature_grid'
+        if z_label in df:
+            z_values = df[z_label]['value']
+            self.z_axis['label'] = df[z_label]['label']
+            self.z_axis['units'] = u.Unit(df[z_label]['unit'])
 
         x_values = []
         self.x_axis = {}

@@ -3,6 +3,7 @@ import numpy as np
 
 from sysver_layout import Layout
 
+
 class Interactions(Layout):
     """Add app interactions
     See https://bokeh.pydata.org/en/latest/docs/user_guide/
@@ -13,8 +14,9 @@ class Interactions(Layout):
         super().__init__()
 
         self.pcircle.data_source.on_change('selected', self.calculate_average)
+        text = self.format_metric_text()
         callback = CustomJS(args=dict(div=self.metric_widget),
-                            code="div.text = '{}'".format(self.format_metric_text()))
+                            code="div.text = '{}'".format(text))
 
         self.plot.js_on_event('reset', callback)
 
@@ -25,4 +27,5 @@ class Interactions(Layout):
             return
 
         index.sort()
-        self.update_metric_display(np.mean(np.array(self.cds.data['z'])[index]))
+        z_data = self.cds.data['z']
+        self.update_metric_display(np.mean(np.array(z_data)[index]))

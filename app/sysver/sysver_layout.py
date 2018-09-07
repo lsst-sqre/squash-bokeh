@@ -32,13 +32,13 @@ class Layout(BaseApp):
 
     def make_layout(self):
         header = widgetbox(self.header_widget, width=Layout.LARGE)
-        ave_temp = widgetbox(self.ave_temp_widget, width=Layout.LARGE)
-        layout = column(header, ave_temp, self.plot)
+        metric = widgetbox(self.metric_widget, width=Layout.LARGE)
+        layout = column(header, metric, self.plot)
         self.doc.add_root(layout)
 
     def make_paragraph(self):
-        self.ave_temp_widget = Div()
-        self.update_ave_temp()
+        self.metric_widget = Div()
+        self.update_metric_display()
 
     def make_scatterplot(self):
         x_label = "{} [{}]".format(self.x_axis['label'], self.x_axis['units'].to_string())
@@ -70,18 +70,16 @@ class Layout(BaseApp):
 
         self.plot.add_layout(color_bar, 'below')
 
-    def format_ave_temp_text(self, average_value=None):
-        if average_value is None:
-            avg_value = self.metric_value.get('value', '')
-        else:
-            avg_value = average_value
+    def format_metric_text(self, value=None):
+        if value is None:
+            value = self.metric_value.get('value', '')
         value_units = self.metric_value.get('units', '')
 
-        text = "Average Temperature: {:.3f} {}".format(avg_value, value_units.strip())
+        text = "Average Temperature: {:.3f} {}".format(value, value_units.strip())
         return text
 
-    def update_ave_temp(self, average_value=None):
-        self.ave_temp_widget.text = self.format_ave_temp_text(average_value)
+    def update_metric_display(self, value=None):
+        self.metric_widget.text = self.format_metric_text(value)
 
     def update_header(self):
         self.header_widget.text = "<p style='color:red;'>{}</p>".format(self.message)

@@ -59,7 +59,7 @@ class BaseApp(APIHelper):
 
         self.cds.data = {'z': z_values, 'y': y_values, 'x': x_values}
 
-        # Get average temperature from job data
+        # Get metric from job data
         self.metric_value = {}
         job_data = self.get_api_data(endpoint='job', item=job_id)
         measurements = job_data['measurements']

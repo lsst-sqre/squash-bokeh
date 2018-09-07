@@ -1,5 +1,4 @@
-from bokeh import events
-from bokeh.models import CustomJS, ResetTool
+from bokeh.models import CustomJS
 import numpy as np
 
 from sysver_layout import Layout

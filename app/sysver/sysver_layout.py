@@ -1,11 +1,10 @@
 from bokeh.core.enums import Orientation
 from bokeh.layouts import column, widgetbox
-from bokeh.models import ColorBar, LinearColorMapper
+from bokeh.models import ColorBar
 from bokeh.models.widgets import Div
+from bokeh.palettes import Plasma256
 from bokeh.plotting import figure
-import matplotlib as mpl
-from matplotlib import cm
-import numpy as np
+from bokeh.transform import linear_cmap
 
 from sysver_base import BaseApp
 
@@ -55,23 +54,15 @@ class Layout(BaseApp):
                            y_axis_label=y_label)
 
         z_values = self.cds.data['z']
-        color_temps = mpl.colors.Normalize()(z_values)
-        hex_color = "#{:02x}{:02x}{:02x}"
-        colors = [
-            hex_color.format(int(r), int(g), int(b))
-            for r, g, b, _ in 255 * cm.plasma(color_temps)
-        ]
-        self.cds.data['colors'] = colors
+        mapper = linear_cmap(field_name='z', palette=Plasma256,
+                             low=min(z_values), high=max(z_values))
 
-        self.pcircle = self.plot.circle('x', 'y', size=5, fill_color='colors',
-                                        line_color=None,
+        self.pcircle = self.plot.circle('x', 'y', size=5,
+                                        color=mapper,
+                                        line_color=mapper,
                                         source=self.cds.data)
 
-        palette = "{}256".format(cm.plasma.name.capitalize())
-        color_mapper = LinearColorMapper(palette=palette,
-                                         low=np.min(z_values),
-                                         high=np.max(z_values))
-        color_bar = ColorBar(color_mapper=color_mapper, location=(0, 0),
+        color_bar = ColorBar(color_mapper=mapper['transform'], location=(0, 0),
                              title=z_label,
                              label_standoff=5, title_standoff=5,
                              orientation=Orientation.horizontal)

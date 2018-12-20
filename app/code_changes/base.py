@@ -48,7 +48,8 @@ class BaseApp(APIHelper):
         dataset_filters = {'validation_data_cfht': ['r'],
                            'validation_data_hsc': ['HSC-R', 'HSC-I', 'HSC-Y'],
                            'HSC RC2': ['HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z',
-                                       'HSC-Y', 'NB0921']}
+                                       'HSC-Y', 'NB0921'],
+                           'CI-HiTS2015': ['g']}
 
         return dataset_filters[dataset]
 

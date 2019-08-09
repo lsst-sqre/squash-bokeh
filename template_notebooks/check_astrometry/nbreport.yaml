@@ -1,0 +1,5 @@
+handle: check_astrometry
+title: Tool to Check Astrometric Quality of CI Runs
+git_repo: https://github.com/lsst-sqre/squash-bokeh
+git_repo_subdir: template_notebooks/check_astrometry
+ipynb: check_astrometry.ipynb

@@ -4,7 +4,7 @@ git_repo: https://github.com/lsst-sqre/squash-bokeh
 git_repo_subdir: template_notebooks/check_astrometry
 ipynb: check_astrometry.ipynb
 assets:
-  - 'mx_base.py'
+  - 'amx_base.py'
   - 'amx_layout.py'
   - 'amx.py'
   - 'api_helper.py'
